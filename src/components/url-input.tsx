@@ -4,11 +4,7 @@ import { Input } from "@/components/ui/input";
 import { useSearchParams } from "next/navigation";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
-interface UrlInputProps {
-  onSubmit: (url: string) => void;
-}
-
-export function UrlInput({ onSubmit }: UrlInputProps) {
+export function UrlInput({ onSubmit }: any) {
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
