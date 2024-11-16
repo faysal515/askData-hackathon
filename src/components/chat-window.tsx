@@ -11,6 +11,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { formatDistanceToNow, format, isToday, isYesterday } from "date-fns";
 import { UrlInput } from "@/components/url-input";
 import AskDataAvatar from "@/asset/askdata-avatar.svg";
+import { DbManager } from "@/lib/db";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -101,7 +102,11 @@ const DatasetChoices = ({
   </div>
 );
 
-export function ChatWindowComponent() {
+type ChatWindowProps = {
+  dbManager?: DbManager;
+};
+
+export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [charCount, setCharCount] = useState(0);
