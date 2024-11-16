@@ -1,5 +1,9 @@
 import { ChatWindowComponent } from "@/components/chat-window";
 
 export default function Home() {
-  return <ChatWindowComponent />;
+  return (
+    <div className="h-screen overflow-hidden">
+      <ChatWindowComponent />
+    </div>
+  );
 }

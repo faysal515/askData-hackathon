@@ -119,6 +119,7 @@ export function ChatWindowComponent() {
   const [copiedMessageId, setCopiedMessageId] = useState<number | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setCharCount(input.length);
@@ -139,6 +140,17 @@ export function ChatWindowComponent() {
     }
   };
 
+  const scrollToBottom = () => {
+    if (scrollAreaRef.current) {
+      const scrollContainer = scrollAreaRef.current.querySelector(
+        "[data-radix-scroll-area-viewport]"
+      );
+      if (scrollContainer) {
+        scrollContainer.scrollTop = scrollContainer.scrollHeight;
+      }
+    }
+  };
+
   const handleSend = () => {
     if (input.trim() || attachments.length > 0) {
       const newMessage: Message = {
@@ -153,6 +165,9 @@ export function ChatWindowComponent() {
       setAttachments([]);
       setIsTyping(true);
 
+      // Scroll after user message
+      setTimeout(scrollToBottom, 100);
+
       // Simulate AI response
       setTimeout(() => {
         setMessages((prev) => [
@@ -166,6 +181,8 @@ export function ChatWindowComponent() {
           },
         ]);
         setIsTyping(false);
+        // Scroll after AI response
+        setTimeout(scrollToBottom, 100);
       }, 2000);
     }
   };
@@ -281,6 +298,7 @@ export function ChatWindowComponent() {
           timestamp: new Date(),
         },
       ]);
+      setTimeout(scrollToBottom, 100);
     } catch (error) {
       setMessages((prev) => [
         ...prev,
@@ -292,6 +310,7 @@ export function ChatWindowComponent() {
           timestamp: new Date(),
         },
       ]);
+      setTimeout(scrollToBottom, 100);
     } finally {
       setIsTyping(false);
     }
@@ -311,7 +330,7 @@ export function ChatWindowComponent() {
           className={`flex justify-center items-center min-h-screen bg-background-gray p-4 ${inter.className}`}
         >
           <div className="w-full max-w-4xl h-[calc(100vh-6rem)] bg-background rounded-lg shadow-lg flex flex-col">
-            <ScrollArea className="flex-grow p-4">
+            <ScrollArea className="flex-grow p-4" ref={scrollAreaRef}>
               {messages.length === 0 ? (
                 <EmptyState onUrlSubmit={handleUrlSubmit} />
               ) : (
