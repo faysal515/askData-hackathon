@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, ChangeEvent } from "react";
-import { Send, ImagePlus, X, Copy } from "lucide-react";
+import { Send, ImagePlus, X, Copy, PlayCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -14,7 +14,7 @@ import { UrlInput } from "@/components/url-input";
 const inter = Inter({ subsets: ["latin"] });
 
 interface Attachment {
-  type: "'video'" | "'image'" | "'audio'" | "'file'";
+  type: "video" | "image" | "audio" | "file";
   name: string;
   url: string;
   duration?: number;
@@ -23,20 +23,37 @@ interface Attachment {
 interface Message {
   id: number;
   text: string;
-  sender: "'user'" | "'ai'";
+  sender: "user" | "ai";
   attachments: Attachment[];
   timestamp: Date;
+  messageType?: "text" | "select_choices" | "chart";
+  datasets?: Dataset[];
+}
+
+interface Dataset {
+  identifier: string;
+  title: string;
+  titlelear: string;
+  url: string;
+  format: "csv" | "json" | "xml" | string;
+}
+
+interface EmptyStateProps {
+  onUrlSubmit: (datasets: Dataset[]) => void;
 }
 
 const MAX_CHARACTERS = 50000;
 
-const EmptyState = () => (
+const EmptyState = ({ onUrlSubmit }: EmptyStateProps) => (
   <div className="flex flex-col items-center justify-center h-full text-center p-4">
     <div className="text-6xl mb-6">👋</div>
     <h3 className="text-xl text-gray-700 mb-4">Ask me anything</h3>
     <p className="text-lg text-gray-600 mb-6 max-w-md">
       I'm here to assist you with any questions you have about the open data
     </p>
+    <div className="w-full max-w-md">
+      <UrlInput onSubmit={onUrlSubmit} />
+    </div>
   </div>
 );
 
@@ -63,6 +80,33 @@ const TypingIndicator = () => (
         style={{ animationDelay: "'300ms'" }}
       ></div>
     </div>
+  </div>
+);
+
+const DatasetChoices = ({
+  datasets,
+  onSelect,
+}: {
+  datasets: Dataset[];
+  onSelect: (dataset: Dataset) => void;
+}) => (
+  <div className="mt-4 space-y-2">
+    {datasets.map((dataset) => (
+      <button
+        key={dataset.identifier}
+        onClick={() => onSelect(dataset)}
+        className="w-full text-left p-3 rounded-lg bg-white hover:bg-gray-50 
+          border border-gray-200 transition-colors flex items-center justify-between group"
+      >
+        <div className="flex-1">
+          <h4 className="font-medium text-sm text-gray-900">{dataset.title}</h4>
+          <p className="text-xs text-gray-500 mt-1">
+            Format: {dataset.format.toUpperCase()}
+          </p>
+        </div>
+        <Send className="h-4 w-4 text-gray-400 group-hover:text-gray-600" />
+      </button>
+    ))}
   </div>
 );
 
@@ -186,19 +230,71 @@ export function ChatWindowComponent() {
       .padStart(2, "0")}`;
   };
 
-  const handleUrlSubmit = (data: any) => {
-    console.log("URL/Dataset submitted:", data);
-    // Here you can process the data and potentially start a conversation
-    // For example, you might want to add an initial AI message about the dataset
+  const handleUrlSubmit = (datasets: Dataset[]) => {
+    console.log("Datasets submitted:", datasets);
+
     setMessages([
       {
         id: 1,
-        text: `I've loaded the dataset. What would you like to know about it?`,
-        sender: "'ai'",
+        text: "I've found the following datasets. Click on one to load its data:",
+        sender: "ai",
         attachments: [],
         timestamp: new Date(),
+        messageType: "select_choices",
+        datasets: datasets,
       },
     ]);
+  };
+
+  const handleDatasetSelect = async (dataset: Dataset) => {
+    setIsTyping(true);
+
+    try {
+      const response = await fetch("/api/dataset/load", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ url: dataset.url }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to load dataset");
+      }
+
+      const data = await response.json();
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: prev.length + 1,
+          text: `Loading data from: ${dataset.title}`,
+          sender: "ai",
+          attachments: [],
+          timestamp: new Date(),
+        },
+        {
+          id: prev.length + 2,
+          text: `I've loaded the data`,
+          sender: "ai",
+          attachments: [],
+          timestamp: new Date(),
+        },
+      ]);
+    } catch (error) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: prev.length + 1,
+          text: "Sorry, I couldn't load the dataset. Please try again.",
+          sender: "ai",
+          attachments: [],
+          timestamp: new Date(),
+        },
+      ]);
+    } finally {
+      setIsTyping(false);
+    }
   };
 
   const groupedMessages = groupMessagesByDate(messages);
@@ -210,12 +306,6 @@ export function ChatWindowComponent() {
         <h1 className="font-semibold">Abu Dhabi Data Assistant</h1>
       </div>
 
-      {/* Add UrlInput component below header */}
-      <div className="p-4 border-b">
-        <UrlInput onSubmit={handleUrlSubmit} />
-      </div>
-
-      {/* Chat content */}
       <div className="flex-1 overflow-hidden">
         <div
           className={`flex justify-center items-center min-h-screen bg-background-gray p-4 ${inter.className}`}
@@ -223,7 +313,7 @@ export function ChatWindowComponent() {
           <div className="w-full max-w-4xl h-[calc(100vh-6rem)] bg-background rounded-lg shadow-lg flex flex-col">
             <ScrollArea className="flex-grow p-4">
               {messages.length === 0 ? (
-                <EmptyState />
+                <EmptyState onUrlSubmit={handleUrlSubmit} />
               ) : (
                 <>
                   {Object.entries(groupedMessages).map(
@@ -238,13 +328,13 @@ export function ChatWindowComponent() {
                           <div
                             key={message.id}
                             className={`flex flex-col mb-4 group ${
-                              message.sender === "'user'"
+                              message.sender === "user"
                                 ? "items-end"
                                 : "items-start"
                             }`}
                           >
                             <div className="flex items-start">
-                              {message.sender === "'ai'" && (
+                              {message.sender === "ai" && (
                                 <Avatar className="mr-2">
                                   <AvatarImage
                                     src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Logomark-IdPMoRZsUB0VHFpmFcdSNZTeJWKdQG.png"
@@ -256,31 +346,38 @@ export function ChatWindowComponent() {
                               <div className="flex flex-col">
                                 <div
                                   className={`p-3 rounded-lg ${
-                                    message.sender === "'user'"
+                                    message.sender === "user"
                                       ? "bg-primary text-background"
                                       : "bg-background-gray text-text-primary"
                                   }`}
                                 >
                                   {message.text}
+                                  {message.messageType === "select_choices" &&
+                                    message.datasets && (
+                                      <DatasetChoices
+                                        datasets={message.datasets}
+                                        onSelect={handleDatasetSelect}
+                                      />
+                                    )}
                                   {message.attachments.length > 0 && (
                                     <div className="mt-2 grid grid-cols-2 gap-2">
                                       {message.attachments.map(
                                         (attachment, index) =>
-                                          attachment.type === "'video'" ? (
+                                          attachment.type === "video" ? (
                                             <video
                                               key={index}
                                               src={attachment.url}
                                               controls
                                               className="max-w-full rounded-xl"
                                             />
-                                          ) : attachment.type === "'image'" ? (
+                                          ) : attachment.type === "image" ? (
                                             <img
                                               key={index}
                                               src={attachment.url}
                                               alt={attachment.name}
                                               className="max-w-full rounded-xl"
                                             />
-                                          ) : attachment.type === "'audio'" ? (
+                                          ) : attachment.type === "audio" ? (
                                             <audio
                                               key={index}
                                               src={attachment.url}
@@ -308,7 +405,7 @@ export function ChatWindowComponent() {
                                       addSuffix: true,
                                     })}
                                   </span>
-                                  {message.sender === "'ai'" && (
+                                  {message.sender === "ai" && (
                                     <Button
                                       variant="ghost"
                                       size="icon"
@@ -332,7 +429,7 @@ export function ChatWindowComponent() {
                                   )}
                                 </div>
                               </div>
-                              {message.sender === "'user'" && (
+                              {message.sender === "user" && (
                                 <Avatar className="ml-2">
                                   <AvatarImage
                                     src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Avatar_yellowfemale-PNum1DagwhzNfKUOqztueg5Ocpu5VC.png"
@@ -362,12 +459,12 @@ export function ChatWindowComponent() {
                         key={index}
                         className="relative rounded-xl overflow-hidden"
                       >
-                        {attachment.type === "'video'" ? (
+                        {attachment.type === "video" ? (
                           <video
                             src={attachment.url}
                             className="w-full h-20 object-cover"
                           />
-                        ) : attachment.type === "'image'" ? (
+                        ) : attachment.type === "image" ? (
                           <img
                             src={attachment.url}
                             alt={attachment.name}

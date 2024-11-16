@@ -13,27 +13,42 @@ export function UrlInput({ onSubmit }: UrlInputProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const searchParams = useSearchParams();
-  const datasetId = searchParams.get("datasetId");
+  const datasetId = searchParams.get("dataset_id");
 
   useEffect(() => {
     if (datasetId) {
-      fetchDataset(datasetId);
+      console.log("==== datasetId", datasetId);
+      handleDatasetFetch({ identifier: datasetId });
     }
   }, [datasetId]);
 
-  const fetchDataset = async (id: string) => {
+  const handleDatasetFetch = async ({
+    identifier,
+    url,
+  }: {
+    identifier?: string;
+    url?: string;
+  }) => {
     setLoading(true);
     setError(null);
 
     try {
-      const response = await fetch(`/api/dataset?identifier=${id}`);
+      const response = await fetch("/api/dataset", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ identifier, url }),
+      });
+
       const data = await response.json();
 
       if (!response.ok) {
         throw new Error(data.error || "Failed to fetch dataset");
       }
 
-      onSubmit(data.data?.distribution); // Assuming the API returns the data in the format you need
+      console.log("==== data", data);
+      onSubmit(data.data?.distribution);
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
@@ -44,30 +59,7 @@ export function UrlInput({ onSubmit }: UrlInputProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (url.trim()) {
-      setLoading(true);
-      setError(null);
-
-      try {
-        const response = await fetch(`/api/dataset`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ url: url.trim() }),
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.error || "Failed to process URL");
-        }
-
-        onSubmit(data); // Pass the processed data to parent component
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "An error occurred");
-      } finally {
-        setLoading(false);
-      }
+      handleDatasetFetch({ url: url.trim() });
     }
   };
 
