@@ -13,6 +13,7 @@ import { UrlInput } from "@/components/url-input";
 import AskDataAvatar from "@/asset/askdata-avatar.svg";
 import { DbManager } from "@/lib/db";
 import { getCSVPreview, insertToTable } from "@/lib/utils";
+import ReactMarkdown from "react-markdown";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -260,9 +261,6 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
             // @ts-ignore
             setApiMessages((prev) => [...prev, ...newApiMessages]);
 
-            // sleep for 100 ms
-            await new Promise((resolve) => setTimeout(resolve, 100));
-
             await sendMessageToApi([...payloadMessage, ...newApiMessages]);
           }
         } else if (parsed.content) {
@@ -454,12 +452,14 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
                         {dateMessages.map((message) => (
                           <div key={message.id}>
                             {message.isStatusMessage ? (
+                              // Status message styling (similar to timestamp)
                               <div className="flex justify-center my-4">
                                 <span className="bg-background-gray text-text-secondary text-xs px-2 py-1 rounded-full">
                                   {message.text}
                                 </span>
                               </div>
                             ) : (
+                              // Regular message
                               <div
                                 className={`flex flex-col mb-4 group ${
                                   message.role === "user"
@@ -467,8 +467,6 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
                                     : "items-start"
                                 }`}
                               >
-                                {message.isDataMessage && <p>data___</p>}
-                                {message.isInternal && <p>internal___</p>}
                                 <div className="flex items-start">
                                   {message.role === "assistant" && (
                                     <Avatar className="mr-2">
@@ -487,13 +485,57 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
                                           : "bg-background-gray text-text-primary"
                                       }`}
                                     >
-                                      {message.text}
-                                      {message.messageType ===
-                                        "select_choices" && (
-                                        <DatasetChoices
-                                          datasets={datasets}
-                                          onSelect={handleDatasetSelect}
-                                        />
+                                      {message.role === "assistant" ? (
+                                        message.messageType ===
+                                        "select_choices" ? (
+                                          <>
+                                            {message.text}
+                                            <DatasetChoices
+                                              datasets={datasets}
+                                              onSelect={handleDatasetSelect}
+                                            />
+                                          </>
+                                        ) : (
+                                          <ReactMarkdown
+                                            className="prose prose-sm max-w-none"
+                                            components={{
+                                              code: ({
+                                                className,
+                                                children,
+                                                ...props
+                                              }: React.HTMLProps<HTMLElement>) => (
+                                                <code
+                                                  className={`${className} ${
+                                                    className?.includes(
+                                                      "inline"
+                                                    )
+                                                      ? "bg-gray-100 rounded px-1"
+                                                      : "block bg-gray-100 p-2 rounded-lg"
+                                                  }`}
+                                                  {...props}
+                                                >
+                                                  {children}
+                                                </code>
+                                              ),
+                                              a: ({
+                                                node,
+                                                children,
+                                                ...props
+                                              }) => (
+                                                <a
+                                                  className="text-blue-600 hover:underline"
+                                                  {...props}
+                                                >
+                                                  {children}
+                                                </a>
+                                              ),
+                                            }}
+                                          >
+                                            {message.text}
+                                          </ReactMarkdown>
+                                        )
+                                      ) : (
+                                        message.text
                                       )}
                                     </div>
                                     <div className="flex items-center mt-1 text-xs text-text-secondary">
@@ -505,28 +547,6 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
                                           }
                                         )}
                                       </span>
-                                      {message.role === "assistant" && (
-                                        <Button
-                                          variant="ghost"
-                                          size="icon"
-                                          className={`ml-2 h-6 w-6 p-0 hover:bg-transparent opacity-0 group-hover:opacity-100 transition-opacity ${
-                                            copiedMessageId === message.id
-                                              ? "bg-green-100"
-                                              : ""
-                                          }`}
-                                          onClick={() =>
-                                            copyToClipboard(
-                                              message.text,
-                                              message.id
-                                            )
-                                          }
-                                        >
-                                          <Copy className="h-4 w-4 text-gray-400 hover:text-gray-600" />
-                                          <span className="sr-only">
-                                            Copy message
-                                          </span>
-                                        </Button>
-                                      )}
                                     </div>
                                   </div>
                                   {message.role === "user" && (

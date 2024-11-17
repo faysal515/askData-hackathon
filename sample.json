@@ -1,0 +1,1261 @@
+
+
+[
+  
+  
+  {
+    "role": "assistant",
+    "content": "",
+    "toolInvocations": [
+      {
+        "state": "result",
+        "toolCallId": "call_ee9TZfKPQoDhBlX0Ji2iQxO7",
+        "toolName": "executeSql",
+        "args": {
+          "sql": "CREATE TABLE compensation_of_employees (\n    id bigint primary key generated always as identity,\n    indicator_en text,\n    indicator_ar text,\n    variable_en text,\n    variable_ar text,\n    unit_en text,\n    unit_ar text,\n    geography_en text,\n    geography_ar text,\n    temporal_ref_year_en text,\n    temporal_ref_year_ar text,\n    value numeric\n)"
+        },
+        "result": {
+          "success": true,
+          "queryResults": [
+            {
+              "rows": [],
+              "fields": [],
+              "affectedRows": 0
+            }
+          ],
+          "updatedSchema": [
+            {
+              "id": 16385,
+              "schema": "meta",
+              "name": "migrations",
+              "rls_enabled": false,
+              "rls_forced": false,
+              "replica_identity": "DEFAULT",
+              "bytes": 32768,
+              "size": "32 kB",
+              "live_rows_estimate": 0,
+              "dead_rows_estimate": 0,
+              "comment": null,
+              "primary_keys": [
+                {
+                  "name": "version",
+                  "schema": "meta",
+                  "table_id": 16385,
+                  "table_name": "migrations"
+                }
+              ],
+              "relationships": [],
+              "columns": [
+                {
+                  "table_id": 16385,
+                  "schema": "meta",
+                  "table": "migrations",
+                  "id": "16385.1",
+                  "ordinal_position": 1,
+                  "name": "version",
+                  "default_value": null,
+                  "data_type": "text",
+                  "format": "text",
+                  "is_identity": false,
+                  "identity_generation": null,
+                  "is_generated": false,
+                  "is_nullable": false,
+                  "is_updatable": true,
+                  "is_unique": false,
+                  "check": null,
+                  "enums": [],
+                  "comment": null
+                },
+                {
+                  "table_id": 16385,
+                  "schema": "meta",
+                  "table": "migrations",
+                  "id": "16385.2",
+                  "ordinal_position": 2,
+                  "name": "name",
+                  "default_value": null,
+                  "data_type": "text",
+                  "format": "text",
+                  "is_identity": false,
+                  "identity_generation": null,
+                  "is_generated": false,
+                  "is_nullable": true,
+                  "is_updatable": true,
+                  "is_unique": false,
+                  "check": null,
+                  "enums": [],
+                  "comment": null
+                },
+                {
+                  "table_id": 16385,
+                  "schema": "meta",
+                  "table": "migrations",
+                  "id": "16385.3",
+                  "ordinal_position": 3,
+                  "name": "applied_at",
+                  "default_value": "now()",
+                  "data_type": "timestamp with time zone",
+                  "format": "timestamptz",
+                  "is_identity": false,
+                  "identity_generation": null,
+                  "is_generated": false,
+                  "is_nullable": false,
+                  "is_updatable": true,
+                  "is_unique": false,
+                  "check": null,
+                  "enums": [],
+                  "comment": null
+                }
+              ]
+            },
+            {
+              "id": 16714,
+              "schema": "meta",
+              "name": "embeddings",
+              "rls_enabled": false,
+              "rls_forced": false,
+              "replica_identity": "DEFAULT",
+              "bytes": 16384,
+              "size": "16 kB",
+              "live_rows_estimate": 0,
+              "dead_rows_estimate": 0,
+              "comment": null,
+              "primary_keys": [
+                {
+                  "name": "id",
+                  "schema": "meta",
+                  "table_id": 16714,
+                  "table_name": "embeddings"
+                }
+              ],
+              "relationships": [],
+              "columns": [
+                {
+                  "table_id": 16714,
+                  "schema": "meta",
+                  "table": "embeddings",
+                  "id": "16714.1",
+                  "ordinal_position": 1,
+                  "name": "id",
+                  "default_value": null,
+                  "data_type": "bigint",
+                  "format": "int8",
+                  "is_identity": true,
+                  "identity_generation": "ALWAYS",
+                  "is_generated": false,
+                  "is_nullable": false,
+                  "is_updatable": true,
+                  "is_unique": false,
+                  "check": null,
+                  "enums": [],
+                  "comment": null
+                },
+                {
+                  "table_id": 16714,
+                  "schema": "meta",
+                  "table": "embeddings",
+                  "id": "16714.2",
+                  "ordinal_position": 2,
+                  "name": "created_at",
+                  "default_value": "now()",
+                  "data_type": "timestamp with time zone",
+                  "format": "timestamptz",
+                  "is_identity": false,
+                  "identity_generation": null,
+                  "is_generated": false,
+                  "is_nullable": false,
+                  "is_updatable": true,
+                  "is_unique": false,
+                  "check": null,
+                  "enums": [],
+                  "comment": null
+                },
+                {
+                  "table_id": 16714,
+                  "schema": "meta",
+                  "table": "embeddings",
+                  "id": "16714.3",
+                  "ordinal_position": 3,
+                  "name": "content",
+                  "default_value": null,
+                  "data_type": "text",
+                  "format": "text",
+                  "is_identity": false,
+                  "identity_generation": null,
+                  "is_generated": false,
+                  "is_nullable": false,
+                  "is_updatable": true,
+                  "is_unique": false,
+                  "check": null,
+                  "enums": [],
+                  "comment": null
+                },
+                {
+                  "table_id": 16714,
+                  "schema": "meta",
+                  "table": "embeddings",
+                  "id": "16714.4",
+                  "ordinal_position": 4,
+                  "name": "embedding",
+                  "default_value": null,
+                  "data_type": "USER-DEFINED",
+                  "format": "vector",
+                  "is_identity": false,
+                  "identity_generation": null,
+                  "is_generated": false,
+                  "is_nullable": false,
+                  "is_updatable": true,
+                  "is_unique": false,
+                  "check": null,
+                  "enums": [],
+                  "comment": null
+                }
+              ]
+            },
+            {
+              "id": 16723,
+              "schema": "public",
+              "name": "compensation_of_employees",
+              "rls_enabled": false,
+              "rls_forced": false,
+              "replica_identity": "DEFAULT",
+              "bytes": 16384,
+              "size": "16 kB",
+              "live_rows_estimate": 0,
+              "dead_rows_estimate": 0,
+              "comment": null,
+              "primary_keys": [
+                {
+                  "name": "id",
+                  "schema": "public",
+                  "table_id": 16723,
+                  "table_name": "compensation_of_employees"
+                }
+              ],
+              "relationships": [],
+              "columns": [
+                {
+                  "table_id": 16723,
+                  "schema": "public",
+                  "table": "compensation_of_employees",
+                  "id": "16723.1",
+                  "ordinal_position": 1,
+                  "name": "id",
+                  "default_value": null,
+                  "data_type": "bigint",
+                  "format": "int8",
+                  "is_identity": true,
+                  "identity_generation": "ALWAYS",
+                  "is_generated": false,
+                  "is_nullable": false,
+                  "is_updatable": true,
+                  "is_unique": false,
+                  "check": null,
+                  "enums": [],
+                  "comment": null
+                },
+                {
+                  "table_id": 16723,
+                  "schema": "public",
+                  "table": "compensation_of_employees",
+                  "id": "16723.2",
+                  "ordinal_position": 2,
+                  "name": "indicator_en",
+                  "default_value": null,
+                  "data_type": "text",
+                  "format": "text",
+                  "is_identity": false,
+                  "identity_generation": null,
+                  "is_generated": false,
+                  "is_nullable": true,
+                  "is_updatable": true,
+                  "is_unique": false,
+                  "check": null,
+                  "enums": [],
+                  "comment": null
+                },
+                {
+                  "table_id": 16723,
+                  "schema": "public",
+                  "table": "compensation_of_employees",
+                  "id": "16723.3",
+                  "ordinal_position": 3,
+                  "name": "indicator_ar",
+                  "default_value": null,
+                  "data_type": "text",
+                  "format": "text",
+                  "is_identity": false,
+                  "identity_generation": null,
+                  "is_generated": false,
+                  "is_nullable": true,
+                  "is_updatable": true,
+                  "is_unique": false,
+                  "check": null,
+                  "enums": [],
+                  "comment": null
+                },
+                {
+                  "table_id": 16723,
+                  "schema": "public",
+                  "table": "compensation_of_employees",
+                  "id": "16723.4",
+                  "ordinal_position": 4,
+                  "name": "variable_en",
+                  "default_value": null,
+                  "data_type": "text",
+                  "format": "text",
+                  "is_identity": false,
+                  "identity_generation": null,
+                  "is_generated": false,
+                  "is_nullable": true,
+                  "is_updatable": true,
+                  "is_unique": false,
+                  "check": null,
+                  "enums": [],
+                  "comment": null
+                },
+                {
+                  "table_id": 16723,
+                  "schema": "public",
+                  "table": "compensation_of_employees",
+                  "id": "16723.5",
+                  "ordinal_position": 5,
+                  "name": "variable_ar",
+                  "default_value": null,
+                  "data_type": "text",
+                  "format": "text",
+                  "is_identity": false,
+                  "identity_generation": null,
+                  "is_generated": false,
+                  "is_nullable": true,
+                  "is_updatable": true,
+                  "is_unique": false,
+                  "check": null,
+                  "enums": [],
+                  "comment": null
+                },
+                {
+                  "table_id": 16723,
+                  "schema": "public",
+                  "table": "compensation_of_employees",
+                  "id": "16723.6",
+                  "ordinal_position": 6,
+                  "name": "unit_en",
+                  "default_value": null,
+                  "data_type": "text",
+                  "format": "text",
+                  "is_identity": false,
+                  "identity_generation": null,
+                  "is_generated": false,
+                  "is_nullable": true,
+                  "is_updatable": true,
+                  "is_unique": false,
+                  "check": null,
+                  "enums": [],
+                  "comment": null
+                },
+                {
+                  "table_id": 16723,
+                  "schema": "public",
+                  "table": "compensation_of_employees",
+                  "id": "16723.7",
+                  "ordinal_position": 7,
+                  "name": "unit_ar",
+                  "default_value": null,
+                  "data_type": "text",
+                  "format": "text",
+                  "is_identity": false,
+                  "identity_generation": null,
+                  "is_generated": false,
+                  "is_nullable": true,
+                  "is_updatable": true,
+                  "is_unique": false,
+                  "check": null,
+                  "enums": [],
+                  "comment": null
+                },
+                {
+                  "table_id": 16723,
+                  "schema": "public",
+                  "table": "compensation_of_employees",
+                  "id": "16723.8",
+                  "ordinal_position": 8,
+                  "name": "geography_en",
+                  "default_value": null,
+                  "data_type": "text",
+                  "format": "text",
+                  "is_identity": false,
+                  "identity_generation": null,
+                  "is_generated": false,
+                  "is_nullable": true,
+                  "is_updatable": true,
+                  "is_unique": false,
+                  "check": null,
+                  "enums": [],
+                  "comment": null
+                },
+                {
+                  "table_id": 16723,
+                  "schema": "public",
+                  "table": "compensation_of_employees",
+                  "id": "16723.9",
+                  "ordinal_position": 9,
+                  "name": "geography_ar",
+                  "default_value": null,
+                  "data_type": "text",
+                  "format": "text",
+                  "is_identity": false,
+                  "identity_generation": null,
+                  "is_generated": false,
+                  "is_nullable": true,
+                  "is_updatable": true,
+                  "is_unique": false,
+                  "check": null,
+                  "enums": [],
+                  "comment": null
+                },
+                {
+                  "table_id": 16723,
+                  "schema": "public",
+                  "table": "compensation_of_employees",
+                  "id": "16723.10",
+                  "ordinal_position": 10,
+                  "name": "temporal_ref_year_en",
+                  "default_value": null,
+                  "data_type": "text",
+                  "format": "text",
+                  "is_identity": false,
+                  "identity_generation": null,
+                  "is_generated": false,
+                  "is_nullable": true,
+                  "is_updatable": true,
+                  "is_unique": false,
+                  "check": null,
+                  "enums": [],
+                  "comment": null
+                },
+                {
+                  "table_id": 16723,
+                  "schema": "public",
+                  "table": "compensation_of_employees",
+                  "id": "16723.11",
+                  "ordinal_position": 11,
+                  "name": "temporal_ref_year_ar",
+                  "default_value": null,
+                  "data_type": "text",
+                  "format": "text",
+                  "is_identity": false,
+                  "identity_generation": null,
+                  "is_generated": false,
+                  "is_nullable": true,
+                  "is_updatable": true,
+                  "is_unique": false,
+                  "check": null,
+                  "enums": [],
+                  "comment": null
+                },
+                {
+                  "table_id": 16723,
+                  "schema": "public",
+                  "table": "compensation_of_employees",
+                  "id": "16723.12",
+                  "ordinal_position": 12,
+                  "name": "value",
+                  "default_value": null,
+                  "data_type": "numeric",
+                  "format": "numeric",
+                  "is_identity": false,
+                  "identity_generation": null,
+                  "is_generated": false,
+                  "is_nullable": true,
+                  "is_updatable": true,
+                  "is_unique": false,
+                  "check": null,
+                  "enums": [],
+                  "comment": null
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": "",
+    "toolInvocations": [
+      {
+        "state": "result",
+        "toolCallId": "call_TzABkbhOoyOsh2OI1mnOUjOc",
+        "toolName": "importCsv",
+        "args": {
+          "fileId": "nvYCHpg",
+          "sql": "COPY compensation_of_employees (indicator_en, indicator_ar, variable_en, variable_ar, unit_en, unit_ar, geography_en, geography_ar, temporal_ref_year_en, temporal_ref_year_ar, value) FROM '/dev/blob' DELIMITER ',' CSV HEADER"
+        },
+        "result": {
+          "success": true,
+          "message": "The CSV has been imported successfully."
+        }
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": "The CSV file has been successfully imported into the `compensation_of_employees` table. If you need any further analysis or queries on this data, feel free to ask!"
+  },
+  {
+    "role": "user",
+    "content": "Name this conversation. No need to reply.",
+    "data": {
+      "automated": true
+    }
+  },
+  {
+    "role": "assistant",
+    "content": "",
+    "toolInvocations": [
+      {
+        "state": "result",
+        "toolCallId": "call_gOos1dOiVVFA4CFuQozL34xL",
+        "toolName": "renameConversation",
+        "args": {
+          "name": "Compensation of Employees Data Import"
+        },
+        "result": {
+          "success": true,
+          "message": "Database conversation has been successfully renamed."
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": "what kind of analysis you can do from this data table?"
+  },
+  {
+    "role": "assistant",
+    "content": "",
+    "toolInvocations": [
+      {
+        "state": "result",
+        "toolCallId": "call_ID32vdCR5oZthUB3Cif6jwUa",
+        "toolName": "brainstormReports",
+        "args": {
+          "reports": [
+            {
+              "name": "Total Compensation by Emirate",
+              "description": "Calculate the total compensation of employees for each emirate over the years."
+            },
+            {
+              "name": "Yearly Compensation Trends",
+              "description": "Analyze the trends in employee compensation over the years for each emirate."
+            },
+            {
+              "name": "Comparison of Wages and Salaries",
+              "description": "Compare the wages and salaries across different emirates for a specific year."
+            },
+            {
+              "name": "Compensation Growth Rate",
+              "description": "Determine the growth rate of employee compensation over the years for each emirate."
+            },
+            {
+              "name": "Emirate-wise Compensation Distribution",
+              "description": "Visualize the distribution of employee compensation across different emirates."
+            }
+          ]
+        },
+        "result": {
+          "success": true,
+          "message": "Reports have been brainstormed. Relay this info to the user."
+        }
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": "Here are some analyses you can perform on the `compensation_of_employees` data table:\n\n1. **Total Compensation by Emirate**: Calculate the total compensation of employees for each emirate over the years.\n\n2. **Yearly Compensation Trends**: Analyze the trends in employee compensation over the years for each emirate.\n\n3. **Comparison of Wages and Salaries**: Compare the wages and salaries across different emirates for a specific year.\n\n4. **Compensation Growth Rate**: Determine the growth rate of employee compensation over the years for each emirate.\n\n5. **Emirate-wise Compensation Distribution**: Visualize the distribution of employee compensation across different emirates.\n\nIf any of these analyses interest you, let me know, and I can help you with the details!"
+  },
+  {
+    "role": "user",
+    "content": "1"
+  },
+  {
+    "role": "assistant",
+    "content": "",
+    "toolInvocations": [
+      {
+        "state": "result",
+        "toolCallId": "call_TqBFKTBC2ITFVYXvquDiuBpq",
+        "toolName": "executeSql",
+        "args": {
+          "sql": "SELECT geography_en, SUM(value) AS total_compensation\nFROM compensation_of_employees\nGROUP BY geography_en\nORDER BY total_compensation DESC\nLIMIT 5;"
+        },
+        "result": {
+          "success": true,
+          "queryResults": [
+            {
+              "rows": [
+                {
+                  "geography_en": "Total",
+                  "total_compensation": "1566136.126999999979"
+                },
+                {
+                  "geography_en": " Abu Dhabi",
+                  "total_compensation": "767300.0"
+                },
+                {
+                  "geography_en": "Dubai",
+                  "total_compensation": "507845.287979999999"
+                },
+                {
+                  "geography_en": "North Emirates",
+                  "total_compensation": "290990.839020000005"
+                }
+              ],
+              "fields": [
+                {
+                  "name": "geography_en",
+                  "dataTypeID": 25
+                },
+                {
+                  "name": "total_compensation",
+                  "dataTypeID": 1700
+                }
+              ],
+              "affectedRows": 0
+            }
+          ],
+          "updatedSchema": [
+            {
+              "id": 16385,
+              "schema": "meta",
+              "name": "migrations",
+              "rls_enabled": false,
+              "rls_forced": false,
+              "replica_identity": "DEFAULT",
+              "bytes": 32768,
+              "size": "32 kB",
+              "live_rows_estimate": 0,
+              "dead_rows_estimate": 0,
+              "comment": null,
+              "primary_keys": [
+                {
+                  "name": "version",
+                  "schema": "meta",
+                  "table_id": 16385,
+                  "table_name": "migrations"
+                }
+              ],
+              "relationships": [],
+              "columns": [
+                {
+                  "table_id": 16385,
+                  "schema": "meta",
+                  "table": "migrations",
+                  "id": "16385.1",
+                  "ordinal_position": 1,
+                  "name": "version",
+                  "default_value": null,
+                  "data_type": "text",
+                  "format": "text",
+                  "is_identity": false,
+                  "identity_generation": null,
+                  "is_generated": false,
+                  "is_nullable": false,
+                  "is_updatable": true,
+                  "is_unique": false,
+                  "check": null,
+                  "enums": [],
+                  "comment": null
+                },
+                {
+                  "table_id": 16385,
+                  "schema": "meta",
+                  "table": "migrations",
+                  "id": "16385.2",
+                  "ordinal_position": 2,
+                  "name": "name",
+                  "default_value": null,
+                  "data_type": "text",
+                  "format": "text",
+                  "is_identity": false,
+                  "identity_generation": null,
+                  "is_generated": false,
+                  "is_nullable": true,
+                  "is_updatable": true,
+                  "is_unique": false,
+                  "check": null,
+                  "enums": [],
+                  "comment": null
+                },
+                {
+                  "table_id": 16385,
+                  "schema": "meta",
+                  "table": "migrations",
+                  "id": "16385.3",
+                  "ordinal_position": 3,
+                  "name": "applied_at",
+                  "default_value": "now()",
+                  "data_type": "timestamp with time zone",
+                  "format": "timestamptz",
+                  "is_identity": false,
+                  "identity_generation": null,
+                  "is_generated": false,
+                  "is_nullable": false,
+                  "is_updatable": true,
+                  "is_unique": false,
+                  "check": null,
+                  "enums": [],
+                  "comment": null
+                }
+              ]
+            },
+            {
+              "id": 16714,
+              "schema": "meta",
+              "name": "embeddings",
+              "rls_enabled": false,
+              "rls_forced": false,
+              "replica_identity": "DEFAULT",
+              "bytes": 16384,
+              "size": "16 kB",
+              "live_rows_estimate": 0,
+              "dead_rows_estimate": 0,
+              "comment": null,
+              "primary_keys": [
+                {
+                  "name": "id",
+                  "schema": "meta",
+                  "table_id": 16714,
+                  "table_name": "embeddings"
+                }
+              ],
+              "relationships": [],
+              "columns": [
+                {
+                  "table_id": 16714,
+                  "schema": "meta",
+                  "table": "embeddings",
+                  "id": "16714.1",
+                  "ordinal_position": 1,
+                  "name": "id",
+                  "default_value": null,
+                  "data_type": "bigint",
+                  "format": "int8",
+                  "is_identity": true,
+                  "identity_generation": "ALWAYS",
+                  "is_generated": false,
+                  "is_nullable": false,
+                  "is_updatable": true,
+                  "is_unique": false,
+                  "check": null,
+                  "enums": [],
+                  "comment": null
+                },
+                {
+                  "table_id": 16714,
+                  "schema": "meta",
+                  "table": "embeddings",
+                  "id": "16714.2",
+                  "ordinal_position": 2,
+                  "name": "created_at",
+                  "default_value": "now()",
+                  "data_type": "timestamp with time zone",
+                  "format": "timestamptz",
+                  "is_identity": false,
+                  "identity_generation": null,
+                  "is_generated": false,
+                  "is_nullable": false,
+                  "is_updatable": true,
+                  "is_unique": false,
+                  "check": null,
+                  "enums": [],
+                  "comment": null
+                },
+                {
+                  "table_id": 16714,
+                  "schema": "meta",
+                  "table": "embeddings",
+                  "id": "16714.3",
+                  "ordinal_position": 3,
+                  "name": "content",
+                  "default_value": null,
+                  "data_type": "text",
+                  "format": "text",
+                  "is_identity": false,
+                  "identity_generation": null,
+                  "is_generated": false,
+                  "is_nullable": false,
+                  "is_updatable": true,
+                  "is_unique": false,
+                  "check": null,
+                  "enums": [],
+                  "comment": null
+                },
+                {
+                  "table_id": 16714,
+                  "schema": "meta",
+                  "table": "embeddings",
+                  "id": "16714.4",
+                  "ordinal_position": 4,
+                  "name": "embedding",
+                  "default_value": null,
+                  "data_type": "USER-DEFINED",
+                  "format": "vector",
+                  "is_identity": false,
+                  "identity_generation": null,
+                  "is_generated": false,
+                  "is_nullable": false,
+                  "is_updatable": true,
+                  "is_unique": false,
+                  "check": null,
+                  "enums": [],
+                  "comment": null
+                }
+              ]
+            },
+            {
+              "id": 16723,
+              "schema": "public",
+              "name": "compensation_of_employees",
+              "rls_enabled": false,
+              "rls_forced": false,
+              "replica_identity": "DEFAULT",
+              "bytes": 73728,
+              "size": "72 kB",
+              "live_rows_estimate": 0,
+              "dead_rows_estimate": 0,
+              "comment": null,
+              "primary_keys": [
+                {
+                  "name": "id",
+                  "schema": "public",
+                  "table_id": 16723,
+                  "table_name": "compensation_of_employees"
+                }
+              ],
+              "relationships": [],
+              "columns": [
+                {
+                  "table_id": 16723,
+                  "schema": "public",
+                  "table": "compensation_of_employees",
+                  "id": "16723.1",
+                  "ordinal_position": 1,
+                  "name": "id",
+                  "default_value": null,
+                  "data_type": "bigint",
+                  "format": "int8",
+                  "is_identity": true,
+                  "identity_generation": "ALWAYS",
+                  "is_generated": false,
+                  "is_nullable": false,
+                  "is_updatable": true,
+                  "is_unique": false,
+                  "check": null,
+                  "enums": [],
+                  "comment": null
+                },
+                {
+                  "table_id": 16723,
+                  "schema": "public",
+                  "table": "compensation_of_employees",
+                  "id": "16723.2",
+                  "ordinal_position": 2,
+                  "name": "indicator_en",
+                  "default_value": null,
+                  "data_type": "text",
+                  "format": "text",
+                  "is_identity": false,
+                  "identity_generation": null,
+                  "is_generated": false,
+                  "is_nullable": true,
+                  "is_updatable": true,
+                  "is_unique": false,
+                  "check": null,
+                  "enums": [],
+                  "comment": null
+                },
+                {
+                  "table_id": 16723,
+                  "schema": "public",
+                  "table": "compensation_of_employees",
+                  "id": "16723.3",
+                  "ordinal_position": 3,
+                  "name": "indicator_ar",
+                  "default_value": null,
+                  "data_type": "text",
+                  "format": "text",
+                  "is_identity": false,
+                  "identity_generation": null,
+                  "is_generated": false,
+                  "is_nullable": true,
+                  "is_updatable": true,
+                  "is_unique": false,
+                  "check": null,
+                  "enums": [],
+                  "comment": null
+                },
+                {
+                  "table_id": 16723,
+                  "schema": "public",
+                  "table": "compensation_of_employees",
+                  "id": "16723.4",
+                  "ordinal_position": 4,
+                  "name": "variable_en",
+                  "default_value": null,
+                  "data_type": "text",
+                  "format": "text",
+                  "is_identity": false,
+                  "identity_generation": null,
+                  "is_generated": false,
+                  "is_nullable": true,
+                  "is_updatable": true,
+                  "is_unique": false,
+                  "check": null,
+                  "enums": [],
+                  "comment": null
+                },
+                {
+                  "table_id": 16723,
+                  "schema": "public",
+                  "table": "compensation_of_employees",
+                  "id": "16723.5",
+                  "ordinal_position": 5,
+                  "name": "variable_ar",
+                  "default_value": null,
+                  "data_type": "text",
+                  "format": "text",
+                  "is_identity": false,
+                  "identity_generation": null,
+                  "is_generated": false,
+                  "is_nullable": true,
+                  "is_updatable": true,
+                  "is_unique": false,
+                  "check": null,
+                  "enums": [],
+                  "comment": null
+                },
+                {
+                  "table_id": 16723,
+                  "schema": "public",
+                  "table": "compensation_of_employees",
+                  "id": "16723.6",
+                  "ordinal_position": 6,
+                  "name": "unit_en",
+                  "default_value": null,
+                  "data_type": "text",
+                  "format": "text",
+                  "is_identity": false,
+                  "identity_generation": null,
+                  "is_generated": false,
+                  "is_nullable": true,
+                  "is_updatable": true,
+                  "is_unique": false,
+                  "check": null,
+                  "enums": [],
+                  "comment": null
+                },
+                {
+                  "table_id": 16723,
+                  "schema": "public",
+                  "table": "compensation_of_employees",
+                  "id": "16723.7",
+                  "ordinal_position": 7,
+                  "name": "unit_ar",
+                  "default_value": null,
+                  "data_type": "text",
+                  "format": "text",
+                  "is_identity": false,
+                  "identity_generation": null,
+                  "is_generated": false,
+                  "is_nullable": true,
+                  "is_updatable": true,
+                  "is_unique": false,
+                  "check": null,
+                  "enums": [],
+                  "comment": null
+                },
+                {
+                  "table_id": 16723,
+                  "schema": "public",
+                  "table": "compensation_of_employees",
+                  "id": "16723.8",
+                  "ordinal_position": 8,
+                  "name": "geography_en",
+                  "default_value": null,
+                  "data_type": "text",
+                  "format": "text",
+                  "is_identity": false,
+                  "identity_generation": null,
+                  "is_generated": false,
+                  "is_nullable": true,
+                  "is_updatable": true,
+                  "is_unique": false,
+                  "check": null,
+                  "enums": [],
+                  "comment": null
+                },
+                {
+                  "table_id": 16723,
+                  "schema": "public",
+                  "table": "compensation_of_employees",
+                  "id": "16723.9",
+                  "ordinal_position": 9,
+                  "name": "geography_ar",
+                  "default_value": null,
+                  "data_type": "text",
+                  "format": "text",
+                  "is_identity": false,
+                  "identity_generation": null,
+                  "is_generated": false,
+                  "is_nullable": true,
+                  "is_updatable": true,
+                  "is_unique": false,
+                  "check": null,
+                  "enums": [],
+                  "comment": null
+                },
+                {
+                  "table_id": 16723,
+                  "schema": "public",
+                  "table": "compensation_of_employees",
+                  "id": "16723.10",
+                  "ordinal_position": 10,
+                  "name": "temporal_ref_year_en",
+                  "default_value": null,
+                  "data_type": "text",
+                  "format": "text",
+                  "is_identity": false,
+                  "identity_generation": null,
+                  "is_generated": false,
+                  "is_nullable": true,
+                  "is_updatable": true,
+                  "is_unique": false,
+                  "check": null,
+                  "enums": [],
+                  "comment": null
+                },
+                {
+                  "table_id": 16723,
+                  "schema": "public",
+                  "table": "compensation_of_employees",
+                  "id": "16723.11",
+                  "ordinal_position": 11,
+                  "name": "temporal_ref_year_ar",
+                  "default_value": null,
+                  "data_type": "text",
+                  "format": "text",
+                  "is_identity": false,
+                  "identity_generation": null,
+                  "is_generated": false,
+                  "is_nullable": true,
+                  "is_updatable": true,
+                  "is_unique": false,
+                  "check": null,
+                  "enums": [],
+                  "comment": null
+                },
+                {
+                  "table_id": 16723,
+                  "schema": "public",
+                  "table": "compensation_of_employees",
+                  "id": "16723.12",
+                  "ordinal_position": 12,
+                  "name": "value",
+                  "default_value": null,
+                  "data_type": "numeric",
+                  "format": "numeric",
+                  "is_identity": false,
+                  "identity_generation": null,
+                  "is_generated": false,
+                  "is_nullable": true,
+                  "is_updatable": true,
+                  "is_unique": false,
+                  "check": null,
+                  "enums": [],
+                  "comment": null
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": "Here is the total compensation of employees by emirate:\n\n1. **Total**: 1,566,136.13 AED\n2. **Abu Dhabi**: 767,300.00 AED\n3. **Dubai**: 507,845.29 AED\n4. **North Emirates**: 290,990.84 AED\n\nThese figures represent the sum of employee compensation across the different emirates. If you need further analysis or visualization, let me know!"
+  },
+  {
+    "role": "user",
+    "content": "can you give me a chart of total compensation on each emirate"
+  },
+  {
+    "role": "assistant",
+    "content": "",
+    "toolInvocations": [
+      {
+        "state": "result",
+        "toolCallId": "call_uXIs1O47fnmHyoauKD7348DM",
+        "toolName": "generateChart",
+        "args": {
+          "config": {
+            "type": "bar",
+            "data": {
+              "labels": [
+                "Total",
+                "Abu Dhabi",
+                "Dubai",
+                "North Emirates"
+              ],
+              "datasets": [
+                {
+                  "label": "Total Compensation (1000 AED)",
+                  "data": [
+                    1566136.13,
+                    767300,
+                    507845.29,
+                    290990.84
+                  ],
+                  "backgroundColor": [
+                    "#FF6384",
+                    "#36A2EB",
+                    "#FFCE56",
+                    "#4BC0C0"
+                  ]
+                }
+              ]
+            },
+            "options": {
+              "plugins": {},
+              "scales": {
+                "x": {
+                  "axis": "x",
+                  "type": "category",
+                  "offset": true,
+                  "grid": {
+                    "offset": true,
+                    "display": true,
+                    "lineWidth": 1,
+                    "drawOnChartArea": true,
+                    "drawTicks": true,
+                    "tickLength": 8,
+                    "color": "rgba(0,0,0,0.1)"
+                  },
+                  "ticks": {
+                    "minRotation": 0,
+                    "maxRotation": 50,
+                    "mirror": false,
+                    "textStrokeWidth": 0,
+                    "textStrokeColor": "",
+                    "padding": 3,
+                    "display": true,
+                    "autoSkip": true,
+                    "autoSkipPadding": 3,
+                    "labelOffset": 0,
+                    "minor": {},
+                    "major": {},
+                    "align": "center",
+                    "crossAlign": "near",
+                    "showLabelBackdrop": false,
+                    "backdropColor": "rgba(255, 255, 255, 0.75)",
+                    "backdropPadding": 2,
+                    "color": "#666"
+                  },
+                  "display": true,
+                  "reverse": false,
+                  "beginAtZero": false,
+                  "bounds": "ticks",
+                  "clip": true,
+                  "grace": 0,
+                  "border": {
+                    "display": true,
+                    "dash": [],
+                    "dashOffset": 0,
+                    "width": 1,
+                    "color": "rgba(0,0,0,0.1)"
+                  },
+                  "title": {
+                    "display": false,
+                    "text": "",
+                    "padding": {
+                      "top": 4,
+                      "bottom": 4
+                    },
+                    "color": "#666"
+                  },
+                  "id": "x",
+                  "position": "bottom"
+                },
+                "y": {
+                  "axis": "y",
+                  "type": "linear",
+                  "beginAtZero": true,
+                  "ticks": {
+                    "minRotation": 0,
+                    "maxRotation": 50,
+                    "mirror": false,
+                    "textStrokeWidth": 0,
+                    "textStrokeColor": "",
+                    "padding": 3,
+                    "display": true,
+                    "autoSkip": true,
+                    "autoSkipPadding": 3,
+                    "labelOffset": 0,
+                    "minor": {},
+                    "major": {},
+                    "align": "center",
+                    "crossAlign": "near",
+                    "showLabelBackdrop": false,
+                    "backdropColor": "rgba(255, 255, 255, 0.75)",
+                    "backdropPadding": 2,
+                    "color": "#666"
+                  },
+                  "display": true,
+                  "offset": false,
+                  "reverse": false,
+                  "bounds": "ticks",
+                  "clip": true,
+                  "grace": 0,
+                  "grid": {
+                    "display": true,
+                    "lineWidth": 1,
+                    "drawOnChartArea": true,
+                    "drawTicks": true,
+                    "tickLength": 8,
+                    "offset": false,
+                    "color": "rgba(0,0,0,0.1)"
+                  },
+                  "border": {
+                    "display": true,
+                    "dash": [],
+                    "dashOffset": 0,
+                    "width": 1,
+                    "color": "rgba(0,0,0,0.1)"
+                  },
+                  "title": {
+                    "display": false,
+                    "text": "",
+                    "padding": {
+                      "top": 4,
+                      "bottom": 4
+                    },
+                    "color": "#666"
+                  },
+                  "id": "y",
+                  "position": "left"
+                }
+              }
+            }
+          }
+        },
+        "result": {
+          "success": true,
+          "message": "The chart has been generated and displayed to the user above. Acknowledge the user's request."
+        }
+      }
+    ]
+  }
+]
