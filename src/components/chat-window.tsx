@@ -19,10 +19,12 @@ const inter = Inter({ subsets: ["latin"] });
 interface Message {
   id: number;
   text: string;
-  role: "user" | "assistant" | "system" | "data";
+  role: "user" | "assistant" | "system";
   timestamp: Date;
   messageType?: "text" | "select_choices" | "chart";
-  isSystemMessage?: boolean;
+  isStatusMessage?: boolean;
+  isDataMessage?: boolean;
+  isInternal?: boolean;
 }
 
 interface Dataset {
@@ -109,6 +111,12 @@ type ChatWindowProps = {
 
 export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
   const [messages, setMessages] = useState<Message[]>([]);
+  const [apiMessages, setApiMessages] = useState<
+    {
+      role: "user" | "assistant";
+      content: string;
+    }[]
+  >([]);
   const [datasets, setDatasets] = useState<Dataset[]>([]);
   const [input, setInput] = useState("");
   const [charCount, setCharCount] = useState(0);
@@ -160,25 +168,28 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
       text: input.trim(),
       role: "user",
       timestamp: new Date(),
-      isSystemMessage: false,
+      isStatusMessage: false,
     };
 
     // Update the state and then call the API
     setMessages((prev) => [...prev, newMessage]);
+    setApiMessages((prev) => [
+      ...prev,
+      { role: "user", content: newMessage.text },
+    ]);
     setInput("");
     setIsTyping(true);
 
     // Construct payloadMessage after the state update
-    const payloadMessage = messages
-      .filter((m, index) => !m.isSystemMessage && index !== 0)
-      .map((m) => ({
-        role: m.role,
-        content: m.text,
-      }));
+    // const payloadMessage = apiMessages.map((m) => ({
+    //   role: m.role,
+    //   content: m.content,
+    // }));
+    const payloadMessage = [...apiMessages];
 
     // Include the new message in the payload
     payloadMessage.push({
-      role: newMessage.role,
+      role: "user",
       content: newMessage.text,
     });
 
@@ -189,7 +200,7 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
   const sendMessageToApi = async (payloadMessage: any) => {
     try {
       console.log("Sending message:", input.trim());
-      console.log(" >>> ", { payloadMessage, messages });
+      console.log(" >>> ", { payloadMessage, apiMessages });
 
       const response = await fetch("/api/chat", {
         method: "POST",
@@ -226,12 +237,33 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
               ...prev,
               {
                 id: prev.length + 1,
-                text: JSON.stringify(result[0].rows, null, 2), // Convert rows to a string
-                role: "data",
+                text: JSON.stringify(result[0].rows, null, 2),
+                role: "user",
                 timestamp: new Date(),
-                isSystemMessage: false,
+                isStatusMessage: false,
+                isDataMessage: true,
+                isInternal: true,
               },
             ]);
+
+            const newApiMessages = [
+              {
+                role: "assistant",
+                content: `Please give me the result of your SQL query:\n\n${parsed.sql_args.sql}`,
+              },
+              {
+                role: "user",
+                content: JSON.stringify(result[0].rows, null, 2),
+              },
+            ];
+
+            // @ts-ignore
+            setApiMessages((prev) => [...prev, ...newApiMessages]);
+
+            // sleep for 100 ms
+            await new Promise((resolve) => setTimeout(resolve, 100));
+
+            await sendMessageToApi([...payloadMessage, ...newApiMessages]);
           }
         } else if (parsed.content) {
           setMessages((prev) => [
@@ -242,6 +274,10 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
               role: "assistant",
               timestamp: new Date(),
             },
+          ]);
+          setApiMessages((prev) => [
+            ...prev,
+            { role: "assistant", content: parsed.content },
           ]);
         }
       }
@@ -254,7 +290,7 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
           text: "Sorry, there was an error processing your request.",
           role: "assistant",
           timestamp: new Date(),
-          isSystemMessage: true,
+          isStatusMessage: true,
         },
       ]);
     } finally {
@@ -306,7 +342,7 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
         role: "assistant",
         timestamp: new Date(),
         messageType: "select_choices",
-        isSystemMessage: false,
+        isStatusMessage: false,
       },
     ]);
   };
@@ -355,7 +391,7 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
       //     text: `Loading data from: ${dataset.title}`,
       //     role: "assistant",
       //     timestamp: new Date(),
-      //     isSystemMessage: true,
+      //     isStatusMessage: true,
       //   },
       // ]);
       setTypingText("");
@@ -366,7 +402,7 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
           text: `${dataset.title} is ready!`,
           role: "assistant",
           timestamp: new Date(),
-          isSystemMessage: true,
+          isStatusMessage: true,
         },
       ]);
       setSelectedTableSchema(sql);
@@ -379,7 +415,7 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
           text: "Sorry, I couldn't load the dataset. Please try again.",
           role: "assistant",
           timestamp: new Date(),
-          isSystemMessage: true,
+          isStatusMessage: true,
         },
       ]);
       setTimeout(scrollToBottom, 100);
@@ -415,98 +451,98 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
                             {date}
                           </span>
                         </div>
-                        {dateMessages
-                          .filter((message) => message.role !== "data")
-                          .map((message) => (
-                            <div key={message.id}>
-                              {message.isSystemMessage ? (
-                                <div className="flex justify-center my-4">
-                                  <span className="bg-background-gray text-text-secondary text-xs px-2 py-1 rounded-full">
-                                    {message.text}
-                                  </span>
-                                </div>
-                              ) : (
-                                <div
-                                  className={`flex flex-col mb-4 group ${
-                                    message.role === "user"
-                                      ? "items-end"
-                                      : "items-start"
-                                  }`}
-                                >
-                                  <div className="flex items-start">
-                                    {message.role === "assistant" && (
-                                      <Avatar className="mr-2">
-                                        <AvatarImage
-                                          src={AskDataAvatar.src}
-                                          alt="AI Assistant"
+                        {dateMessages.map((message) => (
+                          <div key={message.id}>
+                            {message.isStatusMessage ? (
+                              <div className="flex justify-center my-4">
+                                <span className="bg-background-gray text-text-secondary text-xs px-2 py-1 rounded-full">
+                                  {message.text}
+                                </span>
+                              </div>
+                            ) : (
+                              <div
+                                className={`flex flex-col mb-4 group ${
+                                  message.role === "user"
+                                    ? "items-end"
+                                    : "items-start"
+                                }`}
+                              >
+                                {message.isDataMessage && <p>data___</p>}
+                                {message.isInternal && <p>internal___</p>}
+                                <div className="flex items-start">
+                                  {message.role === "assistant" && (
+                                    <Avatar className="mr-2">
+                                      <AvatarImage
+                                        src={AskDataAvatar.src}
+                                        alt="AI Assistant"
+                                      />
+                                      <AvatarFallback>AI</AvatarFallback>
+                                    </Avatar>
+                                  )}
+                                  <div className="flex flex-col">
+                                    <div
+                                      className={`p-3 rounded-lg ${
+                                        message.role === "user"
+                                          ? "bg-primary text-background"
+                                          : "bg-background-gray text-text-primary"
+                                      }`}
+                                    >
+                                      {message.text}
+                                      {message.messageType ===
+                                        "select_choices" && (
+                                        <DatasetChoices
+                                          datasets={datasets}
+                                          onSelect={handleDatasetSelect}
                                         />
-                                        <AvatarFallback>AI</AvatarFallback>
-                                      </Avatar>
-                                    )}
-                                    <div className="flex flex-col">
-                                      <div
-                                        className={`p-3 rounded-lg ${
-                                          message.role === "user"
-                                            ? "bg-primary text-background"
-                                            : "bg-background-gray text-text-primary"
-                                        }`}
-                                      >
-                                        {message.text}
-                                        {message.messageType ===
-                                          "select_choices" && (
-                                          <DatasetChoices
-                                            datasets={datasets}
-                                            onSelect={handleDatasetSelect}
-                                          />
-                                        )}
-                                      </div>
-                                      <div className="flex items-center mt-1 text-xs text-text-secondary">
-                                        <span>
-                                          {formatDistanceToNow(
-                                            message.timestamp,
-                                            {
-                                              addSuffix: true,
-                                            }
-                                          )}
-                                        </span>
-                                        {message.role === "assistant" && (
-                                          <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className={`ml-2 h-6 w-6 p-0 hover:bg-transparent opacity-0 group-hover:opacity-100 transition-opacity ${
-                                              copiedMessageId === message.id
-                                                ? "bg-green-100"
-                                                : ""
-                                            }`}
-                                            onClick={() =>
-                                              copyToClipboard(
-                                                message.text,
-                                                message.id
-                                              )
-                                            }
-                                          >
-                                            <Copy className="h-4 w-4 text-gray-400 hover:text-gray-600" />
-                                            <span className="sr-only">
-                                              Copy message
-                                            </span>
-                                          </Button>
-                                        )}
-                                      </div>
+                                      )}
                                     </div>
-                                    {message.role === "user" && (
-                                      <Avatar className="ml-2">
-                                        <AvatarImage
-                                          src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Avatar_yellowfemale-PNum1DagwhzNfKUOqztueg5Ocpu5VC.png"
-                                          alt="User"
-                                        />
-                                        <AvatarFallback>U</AvatarFallback>
-                                      </Avatar>
-                                    )}
+                                    <div className="flex items-center mt-1 text-xs text-text-secondary">
+                                      <span>
+                                        {formatDistanceToNow(
+                                          message.timestamp,
+                                          {
+                                            addSuffix: true,
+                                          }
+                                        )}
+                                      </span>
+                                      {message.role === "assistant" && (
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          className={`ml-2 h-6 w-6 p-0 hover:bg-transparent opacity-0 group-hover:opacity-100 transition-opacity ${
+                                            copiedMessageId === message.id
+                                              ? "bg-green-100"
+                                              : ""
+                                          }`}
+                                          onClick={() =>
+                                            copyToClipboard(
+                                              message.text,
+                                              message.id
+                                            )
+                                          }
+                                        >
+                                          <Copy className="h-4 w-4 text-gray-400 hover:text-gray-600" />
+                                          <span className="sr-only">
+                                            Copy message
+                                          </span>
+                                        </Button>
+                                      )}
+                                    </div>
                                   </div>
+                                  {message.role === "user" && (
+                                    <Avatar className="ml-2">
+                                      <AvatarImage
+                                        src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Avatar_yellowfemale-PNum1DagwhzNfKUOqztueg5Ocpu5VC.png"
+                                        alt="User"
+                                      />
+                                      <AvatarFallback>U</AvatarFallback>
+                                    </Avatar>
+                                  )}
                                 </div>
-                              )}
-                            </div>
-                          ))}
+                              </div>
+                            )}
+                          </div>
+                        ))}
                         {isTyping && <TypingIndicator text={typingText} />}
                       </React.Fragment>
                     )
