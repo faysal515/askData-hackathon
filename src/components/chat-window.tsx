@@ -12,7 +12,7 @@ import { formatDistanceToNow, format, isToday, isYesterday } from "date-fns";
 import { UrlInput } from "@/components/url-input";
 import AskDataAvatar from "@/asset/askdata-avatar.svg";
 import { DbManager } from "@/lib/db";
-import { getCSVPreview, insertToTable } from "@/lib/utils";
+import { copyToTable, getCSVPreview, insertToTable } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -328,7 +328,6 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
     });
     return groups;
   };
-
   const handleUrlSubmit = (newDatasets: Dataset[]) => {
     console.log("Datasets submitted:", newDatasets);
     setDatasets(newDatasets);
@@ -422,8 +421,6 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
     }
   };
 
-  const groupedMessages = groupMessagesByDate(messages);
-
   return (
     <div className="h-full w-full flex flex-col rounded-lg">
       {/* Header */}
@@ -441,132 +438,106 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
                 <EmptyState onUrlSubmit={handleUrlSubmit} />
               ) : (
                 <>
-                  {Object.entries(groupedMessages).map(
-                    ([date, dateMessages]) => (
-                      <React.Fragment key={date}>
-                        <div className="flex justify-center my-4">
-                          <span className="bg-background-gray text-text-secondary text-xs px-2 py-1 rounded-full">
-                            {date}
-                          </span>
-                        </div>
-                        {dateMessages.map((message) => (
-                          <div key={message.id}>
-                            {message.isStatusMessage ? (
-                              // Status message styling (similar to timestamp)
-                              <div className="flex justify-center my-4">
-                                <span className="bg-background-gray text-text-secondary text-xs px-2 py-1 rounded-full">
-                                  {message.text}
-                                </span>
-                              </div>
-                            ) : (
-                              // Regular message
-                              <div
-                                className={`flex flex-col mb-4 group ${
-                                  message.role === "user"
-                                    ? "items-end"
-                                    : "items-start"
-                                }`}
-                              >
-                                <div className="flex items-start">
-                                  {message.role === "assistant" && (
-                                    <Avatar className="mr-2">
-                                      <AvatarImage
-                                        src={AskDataAvatar.src}
-                                        alt="AI Assistant"
-                                      />
-                                      <AvatarFallback>AI</AvatarFallback>
-                                    </Avatar>
-                                  )}
-                                  <div className="flex flex-col">
-                                    <div
-                                      className={`p-3 rounded-lg ${
-                                        message.role === "user"
-                                          ? "bg-primary text-background"
-                                          : "bg-background-gray text-text-primary"
-                                      }`}
-                                    >
-                                      {message.role === "assistant" ? (
-                                        message.messageType ===
-                                        "select_choices" ? (
-                                          <>
-                                            {message.text}
-                                            <DatasetChoices
-                                              datasets={datasets}
-                                              onSelect={handleDatasetSelect}
-                                            />
-                                          </>
-                                        ) : (
-                                          <ReactMarkdown
-                                            className="prose prose-sm max-w-none"
-                                            components={{
-                                              code: ({
-                                                className,
-                                                children,
-                                                ...props
-                                              }: React.HTMLProps<HTMLElement>) => (
-                                                <code
-                                                  className={`${className} ${
-                                                    className?.includes(
-                                                      "inline"
-                                                    )
-                                                      ? "bg-gray-100 rounded px-1"
-                                                      : "block bg-gray-100 p-2 rounded-lg"
-                                                  }`}
-                                                  {...props}
-                                                >
-                                                  {children}
-                                                </code>
-                                              ),
-                                              a: ({
-                                                node,
-                                                children,
-                                                ...props
-                                              }) => (
-                                                <a
-                                                  className="text-blue-600 hover:underline"
-                                                  {...props}
-                                                >
-                                                  {children}
-                                                </a>
-                                              ),
-                                            }}
-                                          >
-                                            {message.text}
-                                          </ReactMarkdown>
-                                        )
-                                      ) : (
-                                        message.text
-                                      )}
-                                    </div>
-                                    <div className="flex items-center mt-1 text-xs text-text-secondary">
-                                      <span>
-                                        {formatDistanceToNow(
-                                          message.timestamp,
-                                          {
-                                            addSuffix: true,
-                                          }
-                                        )}
-                                      </span>
-                                    </div>
-                                  </div>
-                                  {message.role === "user" && (
-                                    <Avatar className="ml-2">
-                                      <AvatarImage
-                                        src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Avatar_yellowfemale-PNum1DagwhzNfKUOqztueg5Ocpu5VC.png"
-                                        alt="User"
-                                      />
-                                      <AvatarFallback>U</AvatarFallback>
-                                    </Avatar>
+                  {messages
+                    .filter(
+                      (message) => !message.isInternal && !message.isDataMessage
+                    )
+                    .map((message) => (
+                      <div key={message.id}>
+                        {message.isStatusMessage ? (
+                          <div className="flex justify-center my-4">
+                            <span className="bg-background-gray text-text-secondary text-xs px-2 py-1 rounded-full">
+                              {message.text}
+                            </span>
+                          </div>
+                        ) : (
+                          <div
+                            className={`flex flex-col mb-4 group ${
+                              message.role === "user"
+                                ? "items-end"
+                                : "items-start"
+                            }`}
+                          >
+                            <div className="flex items-start">
+                              {message.role === "assistant" && (
+                                <Avatar className="mr-2">
+                                  <AvatarImage
+                                    src={AskDataAvatar.src}
+                                    alt="AI Assistant"
+                                  />
+                                  <AvatarFallback>AI</AvatarFallback>
+                                </Avatar>
+                              )}
+                              <div className="flex flex-col">
+                                <div
+                                  className={`p-3 rounded-lg ${
+                                    message.role === "user"
+                                      ? "bg-primary text-background"
+                                      : "bg-background-gray text-text-primary"
+                                  }`}
+                                >
+                                  {message.role === "assistant" ? (
+                                    message.messageType === "select_choices" ? (
+                                      <>
+                                        {message.text}
+                                        <DatasetChoices
+                                          datasets={datasets}
+                                          onSelect={handleDatasetSelect}
+                                        />
+                                      </>
+                                    ) : (
+                                      <ReactMarkdown
+                                        className="prose prose-sm max-w-none"
+                                        components={{
+                                          code: ({
+                                            className,
+                                            children,
+                                            ...props
+                                          }: React.HTMLProps<HTMLElement>) => (
+                                            <code
+                                              className={`${className} ${
+                                                className?.includes("inline")
+                                                  ? "bg-gray-100 rounded px-1"
+                                                  : "block bg-gray-100 p-2 rounded-lg"
+                                              }`}
+                                              {...props}
+                                            >
+                                              {children}
+                                            </code>
+                                          ),
+                                          a: ({ node, children, ...props }) => (
+                                            <a
+                                              className="text-blue-600 hover:underline"
+                                              {...props}
+                                            >
+                                              {children}
+                                            </a>
+                                          ),
+                                        }}
+                                      >
+                                        {message.text}
+                                      </ReactMarkdown>
+                                    )
+                                  ) : (
+                                    message.text
                                   )}
                                 </div>
                               </div>
-                            )}
+                              {message.role === "user" && (
+                                <Avatar className="ml-2">
+                                  <AvatarImage
+                                    src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Avatar_yellowfemale-PNum1DagwhzNfKUOqztueg5Ocpu5VC.png"
+                                    alt="User"
+                                  />
+                                  <AvatarFallback>U</AvatarFallback>
+                                </Avatar>
+                              )}
+                            </div>
                           </div>
-                        ))}
-                        {isTyping && <TypingIndicator text={typingText} />}
-                      </React.Fragment>
-                    )
-                  )}
+                        )}
+                      </div>
+                    ))}
+                  {isTyping && <TypingIndicator text={typingText} />}
                 </>
               )}
             </ScrollArea>

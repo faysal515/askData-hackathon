@@ -16,7 +16,11 @@ export async function POST(req: Request) {
     model: azureOpenAi("gpt-4o"),
     schema: z.object({
       tableName: z.string(),
-      columns: z.array(z.string()),
+      columns: z.array(
+        z.string({
+          description: "no data type required. only the column name",
+        })
+      ),
       sql: z.string(),
     }),
     prompt: `
@@ -26,6 +30,12 @@ export async function POST(req: Request) {
     ---- preview end ----
     
     file name: ${fileName}
+    
+    Few things to remember:
+    1. The table name should be in lowercase.
+    2. The columns should be in lowercase.
+    3. prefer using text type for the columns string values or columns that you're not sure about the data type.
+    4. for longitude and latitude, use text type.
     `,
   });
 
