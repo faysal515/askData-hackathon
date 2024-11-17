@@ -36,20 +36,48 @@ export function insertToTable(
   const parsed = Papa.parse(text, {
     header: true,
     skipEmptyLines: true,
+    transformHeader: (header) => header.toLowerCase().trim(),
   });
+
+  // Debug logs
+  console.log("Columns expected:", columns);
+  console.log("Headers found:", parsed.meta.fields);
+  console.log("First row parsed:", parsed.data[0]);
+
+  // Validate we have data
+  if (!parsed.data.length) {
+    throw new Error("No data found in CSV");
+  }
+
+  // Convert expected columns to lowercase for matching
+  const normalizedColumns = columns.map((col) => col.toLowerCase());
 
   // Map the parsed rows to SQL values
   const values = parsed.data
     .map((row: any) => {
-      const rowValues = columns
-        .map((col) => `'${(row[col] || "").replace(/'/g, "''")}'`)
+      const rowValues = normalizedColumns
+        .map((col) => {
+          const value = row[col];
+          // Debug individual value
+          // console.log(`Column ${col}:`, value);
+
+          if (value === undefined || value === null) {
+            return "NULL";
+          }
+          return `'${value.toString().replace(/'/g, "''")}'`;
+        })
         .join(",");
       return `(${rowValues})`;
     })
     .join(",");
 
   const columnsString = columns.join(", ");
-  return `INSERT INTO ${tableName} (${columnsString}) VALUES ${values}`;
+  const sql = `INSERT INTO ${tableName} (${columnsString}) VALUES ${values}`;
+
+  // Debug final SQL
+  console.log("First 2000 chars of SQL:", sql.substring(0, 2000));
+
+  return sql;
 }
 
 export async function copyToTable(
