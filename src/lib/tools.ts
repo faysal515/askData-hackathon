@@ -48,7 +48,7 @@ export const tools = {
   // },
   executeSql: {
     description:
-      "Executes Postgres SQL against the user's database. Perform joins automatically. Always add limits for safety. if last message is a csv preview, provide the sql to create the table and the copy command to import the csv into the table.",
+      "Executes Postgres SQL against the user's database. Perform joins automatically. Always add limits for safety",
     args: z.object({ sql: z.string() }),
     result: result(
       z.object({
