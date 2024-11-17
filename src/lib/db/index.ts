@@ -1,11 +1,17 @@
-import type { PGliteInterface } from "@electric-sql/pglite";
+import type {
+  PGliteInterface,
+  PGliteOptions,
+  Results,
+} from "@electric-sql/pglite";
 import { PGliteWorker } from "@electric-sql/pglite/worker";
 
 export class DbManager {
   private dbInstance: PGliteInterface | undefined;
   private dbPromise: Promise<PGliteInterface> | undefined;
 
-  private static async createPGlite(): Promise<PGliteInterface> {
+  private static async createPGlite(
+    options?: PGliteOptions
+  ): Promise<PGliteInterface> {
     if (typeof window === "undefined") {
       throw new Error(
         "PGlite worker instances are only available in the browser"
@@ -13,7 +19,10 @@ export class DbManager {
     }
 
     const db = await PGliteWorker.create(
-      new Worker(new URL("./worker.ts", import.meta.url), { type: "module" })
+      new Worker(new URL("./worker.ts", import.meta.url), { type: "module" }),
+      {
+        ...options,
+      }
     );
 
     await db.waitReady;
@@ -28,7 +37,9 @@ export class DbManager {
       return this.dbPromise;
     }
 
-    this.dbPromise = DbManager.createPGlite().catch((err) => {
+    this.dbPromise = DbManager.createPGlite({
+      // dataDir: `idb://open_data`,
+    }).catch((err) => {
       this.dbPromise = undefined;
       throw err;
     });
@@ -50,9 +61,9 @@ export class DbManager {
   /**
    * Execute raw SQL (for creating tables, etc.)
    */
-  async execute(sql: string): Promise<void> {
+  async execute(sql: string): Promise<Array<Results>> {
     const db = await this.getDb();
-    await db.exec(sql);
+    return await db.exec(sql);
   }
 
   /**

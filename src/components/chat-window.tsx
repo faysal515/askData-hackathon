@@ -12,17 +12,18 @@ import { formatDistanceToNow, format, isToday, isYesterday } from "date-fns";
 import { UrlInput } from "@/components/url-input";
 import AskDataAvatar from "@/asset/askdata-avatar.svg";
 import { DbManager } from "@/lib/db";
+import { getCSVPreview, insertToTable } from "@/lib/utils";
 
 const inter = Inter({ subsets: ["latin"] });
 
 interface Message {
   id: number;
   text: string;
-  sender: "user" | "ai";
+  role: "user" | "assistant";
   timestamp: Date;
   messageType?: "text" | "select_choices" | "chart";
-  datasets?: Dataset[];
   isSystemMessage?: boolean;
+  toolInvocations?: any[];
 }
 
 interface Dataset {
@@ -52,7 +53,7 @@ const EmptyState = ({ onUrlSubmit }: EmptyStateProps) => (
   </div>
 );
 
-const TypingIndicator = () => (
+const TypingIndicator = ({ text }: { text?: string }) => (
   <div className="flex items-center space-x-2 mb-4">
     <Avatar className="w-8 h-8">
       <AvatarImage src={AskDataAvatar.src} alt="AI Assistant" />
@@ -72,6 +73,7 @@ const TypingIndicator = () => (
         style={{ animationDelay: "'300ms'" }}
       ></div>
     </div>
+    {text && <p className="text-xs text-gray-500 mt-1">{text}</p>}
   </div>
 );
 
@@ -108,12 +110,18 @@ type ChatWindowProps = {
 
 export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
   const [messages, setMessages] = useState<Message[]>([]);
+  const [datasets, setDatasets] = useState<Dataset[]>([]);
   const [input, setInput] = useState("");
   const [charCount, setCharCount] = useState(0);
   const [isTyping, setIsTyping] = useState(false);
+  const [typingText, setTypingText] = useState("");
   const [copiedMessageId, setCopiedMessageId] = useState<number | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const [selectedTable, setSelectedTable] = useState<string | null>(null);
+  const [selectedTableSchema, setSelectedTableSchema] = useState<
+    string[] | null
+  >(null);
 
   useEffect(() => {
     setCharCount(input.length);
@@ -145,37 +153,78 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
     }
   };
 
-  const handleSend = () => {
-    if (input.trim()) {
-      const newMessage: Message = {
-        id: messages.length + 1,
-        text: input.trim(),
-        sender: "user",
-        timestamp: new Date(),
-        isSystemMessage: false,
-      };
-      setMessages((prev) => [...prev, newMessage]);
-      setInput("");
-      setIsTyping(true);
+  const handleSend = async () => {
+    if (!input.trim()) return;
 
-      // Scroll after user message
+    const newMessage: Message = {
+      id: messages.length + 1,
+      text: input.trim(),
+      role: "user",
+      timestamp: new Date(),
+      isSystemMessage: false,
+    };
+    setMessages((prev) => [...prev, newMessage]);
+    setInput("");
+    setIsTyping(true);
+
+    try {
+      console.log("Sending message:", input.trim());
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          messages: messages.map((m) => ({
+            role: m.role,
+            content: m.text,
+            toolInvocations: m.toolInvocations ?? null,
+          })),
+        }),
+      });
+
+      if (!response.ok || !response.body) {
+        throw new Error("Network response was not ok");
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        console.log("Received chunk:", chunk);
+      }
+
+      // Add AI response after streaming is complete
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: prev.length + 1,
+          text: "Streaming complete!", // You might want to accumulate the streamed text instead
+          role: "assistant",
+          timestamp: new Date(),
+          isSystemMessage: false,
+        },
+      ]);
+    } catch (error) {
+      console.error("Error:", error);
+      // Handle error - maybe add an error message to the chat
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: prev.length + 1,
+          text: "Sorry, there was an error processing your request.",
+          role: "assistant",
+          timestamp: new Date(),
+          isSystemMessage: true,
+        },
+      ]);
+    } finally {
+      setIsTyping(false);
       setTimeout(scrollToBottom, 100);
-
-      // Simulate AI response
-      setTimeout(() => {
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: prev.length + 1,
-            text: "I'm processing your request. Give me a moment.",
-            sender: "ai",
-            timestamp: new Date(),
-            isSystemMessage: false,
-          },
-        ]);
-        setIsTyping(false);
-        setTimeout(scrollToBottom, 100);
-      }, 2000);
     }
   };
 
@@ -211,17 +260,17 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
     return groups;
   };
 
-  const handleUrlSubmit = (datasets: Dataset[]) => {
-    console.log("Datasets submitted:", datasets);
+  const handleUrlSubmit = (newDatasets: Dataset[]) => {
+    console.log("Datasets submitted:", newDatasets);
+    setDatasets(newDatasets);
 
     setMessages([
       {
         id: 1,
         text: "I've found the following datasets. Click on one to load its data:",
-        sender: "ai",
+        role: "assistant",
         timestamp: new Date(),
         messageType: "select_choices",
-        datasets: datasets,
         isSystemMessage: false,
       },
     ]);
@@ -243,33 +292,56 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
         throw new Error("Failed to load dataset");
       }
 
-      const data = await response.json();
+      const csvData = await response.json();
 
+      setTypingText("Getting your data ready...");
+      setTimeout(scrollToBottom, 100);
+
+      const tableResponse = await fetch("/api/chat/create-table", {
+        method: "POST",
+        body: JSON.stringify({
+          preview: getCSVPreview(csvData.data),
+          fileName: dataset.title,
+        }),
+      });
+
+      const { sql, columns, tableName } = await tableResponse.json();
+      const result = await dbManager?.execute(sql);
+      console.log("table create result >>> ", result);
+
+      const insertResult = await dbManager?.execute(
+        insertToTable(tableName, csvData.data, columns)
+      );
+      console.log("insert to table result >>> ", insertResult);
       setMessages((prev) => [
         ...prev,
         {
           id: prev.length + 1,
           text: `Loading data from: ${dataset.title}`,
-          sender: "ai",
-          timestamp: new Date(),
-          isSystemMessage: true,
-        },
-        {
-          id: prev.length + 2,
-          text: `I've loaded the data`,
-          sender: "ai",
+          role: "assistant",
           timestamp: new Date(),
           isSystemMessage: true,
         },
       ]);
-      setTimeout(scrollToBottom, 100);
+      setTypingText("");
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: prev.length + 1,
+          text: `${dataset.title} is ready!`,
+          role: "assistant",
+          timestamp: new Date(),
+          isSystemMessage: true,
+        },
+      ]);
     } catch (error) {
+      console.error("Error loading dataset:", error);
       setMessages((prev) => [
         ...prev,
         {
           id: prev.length + 1,
           text: "Sorry, I couldn't load the dataset. Please try again.",
-          sender: "ai",
+          role: "assistant",
           timestamp: new Date(),
           isSystemMessage: true,
         },
@@ -318,13 +390,13 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
                             ) : (
                               <div
                                 className={`flex flex-col mb-4 group ${
-                                  message.sender === "user"
+                                  message.role === "user"
                                     ? "items-end"
                                     : "items-start"
                                 }`}
                               >
                                 <div className="flex items-start">
-                                  {message.sender === "ai" && (
+                                  {message.role === "assistant" && (
                                     <Avatar className="mr-2">
                                       <AvatarImage
                                         src={AskDataAvatar.src}
@@ -336,20 +408,19 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
                                   <div className="flex flex-col">
                                     <div
                                       className={`p-3 rounded-lg ${
-                                        message.sender === "user"
+                                        message.role === "user"
                                           ? "bg-primary text-background"
                                           : "bg-background-gray text-text-primary"
                                       }`}
                                     >
                                       {message.text}
                                       {message.messageType ===
-                                        "select_choices" &&
-                                        message.datasets && (
-                                          <DatasetChoices
-                                            datasets={message.datasets}
-                                            onSelect={handleDatasetSelect}
-                                          />
-                                        )}
+                                        "select_choices" && (
+                                        <DatasetChoices
+                                          datasets={datasets}
+                                          onSelect={handleDatasetSelect}
+                                        />
+                                      )}
                                     </div>
                                     <div className="flex items-center mt-1 text-xs text-text-secondary">
                                       <span>
@@ -360,7 +431,7 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
                                           }
                                         )}
                                       </span>
-                                      {message.sender === "ai" && (
+                                      {message.role === "assistant" && (
                                         <Button
                                           variant="ghost"
                                           size="icon"
@@ -384,7 +455,7 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
                                       )}
                                     </div>
                                   </div>
-                                  {message.sender === "user" && (
+                                  {message.role === "user" && (
                                     <Avatar className="ml-2">
                                       <AvatarImage
                                         src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Avatar_yellowfemale-PNum1DagwhzNfKUOqztueg5Ocpu5VC.png"
@@ -398,7 +469,7 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
                             )}
                           </div>
                         ))}
-                        {isTyping && <TypingIndicator />}
+                        {isTyping && <TypingIndicator text={typingText} />}
                       </React.Fragment>
                     )
                   )}

@@ -2,6 +2,7 @@
 
 import { ChatWindowComponent } from "@/components/chat-window";
 import { DbManager } from "@/lib/db";
+import { tools, convertToCoreTools } from "@/lib/tools";
 import { useEffect, useState } from "react";
 
 // Create singleton instance
