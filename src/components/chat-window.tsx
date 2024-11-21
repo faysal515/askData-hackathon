@@ -14,6 +14,7 @@ import AskDataAvatar from "@/asset/askdata-avatar.svg";
 import { DbManager } from "@/lib/db";
 import { copyToTable, getCSVPreview, insertToTable } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -488,6 +489,7 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
                                     ) : (
                                       <ReactMarkdown
                                         className="prose prose-sm max-w-none"
+                                        remarkPlugins={[remarkGfm]}
                                         components={{
                                           code: ({
                                             className,

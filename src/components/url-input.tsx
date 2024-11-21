@@ -87,8 +87,8 @@ export function UrlInput({ onSubmit }: any) {
         placeholder="Paste your data URL here..."
         className="flex-1"
       />
-      <Button type="submit" disabled={!url.trim()}>
-        Load Data
+      <Button type="submit" disabled={!url.trim() || loading}>
+        {loading ? "Loading..." : "Load Data"}
       </Button>
     </form>
   );
