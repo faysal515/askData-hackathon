@@ -49,12 +49,13 @@ export async function POST(req: Request) {
           - Plugins are not available
           - Keep legend position to 'top'
           - Use a variety of neon colors by default (rather than the same color for all). preferably use the colors from the data.
-          'rgba(75, 192, 192, 0.8)'
-          'rgba(255, 159, 64, 0.8)'
-          'rgba(54, 162, 235, 0.8)'
-          'rgba(153, 102, 255, 0.8)'
-          'rgba(255, 99, 132, 0.8)'
-          'rgba(46, 204, 113, 0.8)'
+          'rgba(54, 162, 235, 0.8)',
+          'rgba(255, 99, 132, 0.8)',
+          'rgba(255, 206, 86, 0.8)',
+          'rgba(75, 192, 192, 0.8)',
+          'rgba(153, 102, 255, 0.8)',
+          'rgba(255, 159, 64, 0.8)',
+          'rgba(231, 233, 237, 0.8)' 
 
         If you see the data is provided by the tool, you can use that data to give the proper answer. in that case the function_call_required should be false. and content should be the answer.
 

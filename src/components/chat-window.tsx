@@ -422,12 +422,13 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
         }),
       });
 
-      const { sql, columns, tableName } = await tableResponse.json();
+      const { sql, columns, tableName, dateColumns } =
+        await tableResponse.json();
       const result = await dbManager?.execute(sql);
       console.log("table create result >>> ", result);
 
       const insertResult = await dbManager?.execute(
-        insertToTable(tableName, csvData.data, columns)
+        insertToTable(tableName, csvData.data, columns, dateColumns)
       );
       console.log("insert to table result >>> ", insertResult);
       // setMessages((prev) => [

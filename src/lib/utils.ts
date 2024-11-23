@@ -30,40 +30,33 @@ export function getCSVPreview(csvString: string, numLines: number = 4): string {
 export function insertToTable(
   tableName: string,
   text: string,
-  columns: string[]
+  columns: string[],
+  dateColumns: string[] = []
 ) {
-  // Use Papa Parse to properly handle CSV parsing
   const parsed = Papa.parse(text, {
     header: true,
     skipEmptyLines: true,
     transformHeader: (header) => header.toLowerCase().trim(),
   });
 
-  // Debug logs
-  console.log("Columns expected:", columns);
-  console.log("Headers found:", parsed.meta.fields);
-  console.log("First row parsed:", parsed.data[0]);
-
-  // Validate we have data
-  if (!parsed.data.length) {
-    throw new Error("No data found in CSV");
-  }
-
-  // Convert expected columns to lowercase for matching
   const normalizedColumns = columns.map((col) => col.toLowerCase());
+  const normalizedDateColumns = dateColumns.map((col) => col.toLowerCase());
 
-  // Map the parsed rows to SQL values
   const values = parsed.data
     .map((row: any) => {
       const rowValues = normalizedColumns
         .map((col) => {
           const value = row[col];
-          // Debug individual value
-          // console.log(`Column ${col}:`, value);
 
           if (value === undefined || value === null) {
             return "NULL";
           }
+
+          if (normalizedDateColumns.includes(col)) {
+            // dynamically cast the value to date
+            return `CAST(${pgEscapeString(value)} AS DATE)`;
+          }
+
           return `'${value.toString().replace(/'/g, "''")}'`;
         })
         .join(",");
@@ -74,10 +67,12 @@ export function insertToTable(
   const columnsString = columns.join(", ");
   const sql = `INSERT INTO ${tableName} (${columnsString}) VALUES ${values}`;
 
-  // Debug final SQL
-  console.log("First 2000 chars of SQL:", sql.substring(0, 2000));
-
   return sql;
+}
+
+// Helper function to properly escape strings for PostgreSQL
+function pgEscapeString(str: string): string {
+  return `E'${str.replace(/'/g, "''")}'`;
 }
 
 export async function copyToTable(
