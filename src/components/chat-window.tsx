@@ -15,6 +15,8 @@ import { DbManager } from "@/lib/db";
 import { copyToTable, getCSVPreview, insertToTable } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { ChartTypeRegistry } from "chart.js";
+import GeneratedChart from "./tools/generated-chart";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -27,6 +29,11 @@ interface Message {
   isStatusMessage?: boolean;
   isDataMessage?: boolean;
   isInternal?: boolean;
+  chartConfig?: {
+    type: keyof ChartTypeRegistry;
+    data: any;
+    options: any;
+  };
 }
 
 interface Dataset {
@@ -88,22 +95,37 @@ const DatasetChoices = ({
   onSelect: (dataset: Dataset) => void;
 }) => (
   <div className="mt-4 space-y-2">
-    {datasets.map((dataset) => (
-      <button
-        key={dataset.identifier}
-        onClick={() => onSelect(dataset)}
-        className="w-full text-left p-3 rounded-lg bg-white hover:bg-gray-50 
-          border border-gray-200 transition-colors flex items-center justify-between group"
-      >
-        <div className="flex-1">
-          <h4 className="font-medium text-sm text-gray-900">{dataset.title}</h4>
-          <p className="text-xs text-gray-500 mt-1">
-            Format: {dataset.format.toUpperCase()}
-          </p>
-        </div>
-        <Send className="h-4 w-4 text-gray-400 group-hover:text-gray-600" />
-      </button>
-    ))}
+    {datasets.map((dataset) => {
+      const isDisabled = !dataset.url || dataset.format.toLowerCase() !== "csv";
+      return (
+        <button
+          key={dataset.identifier}
+          onClick={() => onSelect(dataset)}
+          className={`w-full text-left p-3 rounded-lg transition-colors flex items-center justify-between group ${
+            isDisabled
+              ? "bg-gray-200 border-gray-300 text-gray-400 cursor-not-allowed"
+              : "bg-white hover:bg-gray-50 border border-gray-200"
+          }`}
+          disabled={isDisabled}
+        >
+          <div className="flex-1">
+            <h4 className="font-medium text-sm text-gray-900">
+              {dataset.title}
+            </h4>
+            <p className="text-xs text-gray-500 mt-1">
+              Format: {dataset.format.toUpperCase()}
+            </p>
+          </div>
+          <Send
+            className={`h-4 w-4 ${
+              isDisabled
+                ? "text-gray-300"
+                : "text-gray-400 group-hover:text-gray-600"
+            }`}
+          />
+        </button>
+      );
+    })}
   </div>
 );
 
@@ -157,7 +179,14 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
         "[data-radix-scroll-area-viewport]"
       );
       if (scrollContainer) {
-        scrollContainer.scrollTop = scrollContainer.scrollHeight;
+        const scrollHeight = scrollContainer.scrollHeight;
+        const height = scrollContainer.clientHeight;
+        const maxScrollTop = scrollHeight - height;
+
+        scrollContainer.scrollTo({
+          top: maxScrollTop,
+          behavior: "smooth",
+        });
       }
     }
   };
@@ -181,6 +210,9 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
     ]);
     setInput("");
     setIsTyping(true);
+
+    // Scroll to bottom after sending message
+    setTimeout(scrollToBottom, 100);
 
     // Construct payloadMessage after the state update
     // const payloadMessage = apiMessages.map((m) => ({
@@ -229,40 +261,67 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
         const chunk = decoder.decode(value);
         const parsed = JSON.parse(chunk);
 
-        if (parsed.function_call_required && parsed.sql_args) {
-          const result = await dbManager?.execute(parsed.sql_args.sql);
-          console.log("sql result >>> ", result);
+        if (parsed.function_call_required) {
+          if (parsed.sql_args) {
+            // Handle SQL query case
+            const result = await dbManager?.execute(parsed.sql_args.sql);
+            console.log("sql result >>> ", result);
 
-          // Append a new message with the SQL result
-          if (result && result[0].rows) {
+            if (result && result[0].rows) {
+              setMessages((prev) => [
+                ...prev,
+                {
+                  id: prev.length + 1,
+                  text: JSON.stringify(result[0].rows, null, 2),
+                  role: "user",
+                  timestamp: new Date(),
+                  isStatusMessage: false,
+                  isDataMessage: true,
+                  isInternal: true,
+                },
+              ]);
+
+              const newApiMessages = [
+                {
+                  role: "assistant",
+                  content: `Please give me the result of your SQL query:\n\n${parsed.sql_args.sql}`,
+                },
+                {
+                  role: "user",
+                  content: JSON.stringify(result[0].rows, null, 2),
+                },
+              ];
+
+              // @ts-ignore
+              setApiMessages((prev) => [...prev, ...newApiMessages]);
+              await sendMessageToApi([...payloadMessage, ...newApiMessages]);
+            }
+          } else if (parsed.chart_args) {
+            // Handle chart generation case
             setMessages((prev) => [
               ...prev,
               {
                 id: prev.length + 1,
-                text: JSON.stringify(result[0].rows, null, 2),
-                role: "user",
+                text: "",
+                role: "assistant",
                 timestamp: new Date(),
-                isStatusMessage: false,
-                isDataMessage: true,
-                isInternal: true,
+                messageType: "chart",
+                chartConfig: parsed.chart_args.config,
               },
             ]);
 
-            const newApiMessages = [
-              {
-                role: "assistant",
-                content: `Please give me the result of your SQL query:\n\n${parsed.sql_args.sql}`,
-              },
-              {
-                role: "user",
-                content: JSON.stringify(result[0].rows, null, 2),
-              },
-            ];
-
-            // @ts-ignore
-            setApiMessages((prev) => [...prev, ...newApiMessages]);
-
-            await sendMessageToApi([...payloadMessage, ...newApiMessages]);
+            // If there's accompanying content with the chart, send it as a separate message
+            if (parsed.content) {
+              setMessages((prev) => [
+                ...prev,
+                {
+                  id: prev.length + 1,
+                  text: parsed.content,
+                  role: "assistant",
+                  timestamp: new Date(),
+                },
+              ]);
+            }
           }
         } else if (parsed.content) {
           setMessages((prev) => [
@@ -318,17 +377,6 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
     return format(date, "EEE dd MMM");
   };
 
-  const groupMessagesByDate = (messages: Message[]) => {
-    const groups: { [key: string]: Message[] } = {};
-    messages.forEach((message) => {
-      const dateKey = formatMessageDate(message.timestamp);
-      if (!groups[dateKey]) {
-        groups[dateKey] = [];
-      }
-      groups[dateKey].push(message);
-    });
-    return groups;
-  };
   const handleUrlSubmit = (newDatasets: Dataset[]) => {
     console.log("Datasets submitted:", newDatasets);
     setDatasets(newDatasets);
@@ -422,6 +470,11 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
     }
   };
 
+  // Add this useEffect to scroll when messages change
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
   return (
     <div className="h-full w-full flex flex-col rounded-lg">
       {/* Header */}
@@ -486,6 +539,11 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
                                           onSelect={handleDatasetSelect}
                                         />
                                       </>
+                                    ) : message.messageType === "chart" &&
+                                      message.chartConfig ? (
+                                      <GeneratedChart
+                                        config={message.chartConfig}
+                                      />
                                     ) : (
                                       <ReactMarkdown
                                         className="prose prose-sm max-w-none"
@@ -544,7 +602,6 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
               )}
             </ScrollArea>
 
-            {/* Input area */}
             <div className="p-4">
               <div className="bg-background-gray rounded-lg p-4">
                 <div className="flex flex-col space-y-2">
@@ -568,7 +625,9 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
                     <Button
                       onClick={handleSend}
                       className="bg-primary hover:bg-primary/90 text-background self-end rounded-lg"
-                      disabled={!input.trim()}
+                      disabled={
+                        !input.trim() || isTyping || messages.length === 0
+                      }
                     >
                       <Send className="h-4 w-4" />
                       <span className="sr-only">Send</span>

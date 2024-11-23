@@ -1,28 +1,41 @@
-import { m } from "framer-motion";
-import { Chart } from "react-chartjs-2";
+import { motion as m } from "framer-motion";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  ChartTypeRegistry,
+  ArcElement,
+} from "chart.js";
+import { Chart, ChartProps } from "react-chartjs-2";
 import { ErrorBoundary } from "react-error-boundary";
-import { ToolInvocation } from "@/lib/tools";
+
+// Register ChartJS components
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 export type GeneratedChartProps = {
-  toolInvocation: ToolInvocation<"generateChart">;
+  config: {
+    type: keyof ChartTypeRegistry;
+    data: ChartProps["data"];
+    options: ChartProps["options"];
+  };
 };
 
-export default function GeneratedChart({
-  toolInvocation,
-}: GeneratedChartProps) {
-  if (!("result" in toolInvocation)) {
-    return null;
-  }
+export default function GeneratedChart({ config }: GeneratedChartProps) {
+  console.log("config >>> ", config);
+  const { type, data, options } = config;
 
-  if ("error" in toolInvocation.result) {
-    return (
-      <div className="bg-destructive-300 px-6 py-4 rounded-md">
-        Error loading chart
-      </div>
-    );
-  }
-
-  const { type, data, options } = toolInvocation.args.config;
   return (
     <ErrorBoundary
       fallbackRender={() => (
