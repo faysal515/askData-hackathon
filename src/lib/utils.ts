@@ -31,7 +31,8 @@ export function insertToTable(
   tableName: string,
   text: string,
   columns: string[],
-  dateColumns: string[] = []
+  dateColumns: string[] = [],
+  numericColumns: string[] = []
 ) {
   const parsed = Papa.parse(text, {
     header: true,
@@ -39,22 +40,33 @@ export function insertToTable(
     transformHeader: (header) => header.toLowerCase().trim(),
   });
 
+  console.log("parsed >>> ", parsed);
+
   const normalizedColumns = columns.map((col) => col.toLowerCase());
   const normalizedDateColumns = dateColumns.map((col) => col.toLowerCase());
+  const normalizedNumericColumns = numericColumns.map((col) =>
+    col.toLowerCase()
+  );
 
   const values = parsed.data
     .map((row: any) => {
       const rowValues = normalizedColumns
         .map((col) => {
-          const value = row[col];
+          const value = row[col] || row[col.replace(/_/g, " ")];
 
-          if (value === undefined || value === null) {
+          console.log("value >>> ", { row: row, col: col, value: value });
+          if (value === undefined || value === null || value === "") {
             return "NULL";
           }
 
           if (normalizedDateColumns.includes(col)) {
-            // dynamically cast the value to date
             return `CAST(${pgEscapeString(value)} AS DATE)`;
+          }
+
+          if (normalizedNumericColumns.includes(col)) {
+            // Remove commas and try to convert to number
+            const cleanValue = value.toString().replace(/,/g, "").trim();
+            return isNaN(Number(cleanValue)) ? "NULL" : cleanValue;
           }
 
           return `'${value.toString().replace(/'/g, "''")}'`;
@@ -67,6 +79,7 @@ export function insertToTable(
   const columnsString = columns.join(", ");
   const sql = `INSERT INTO ${tableName} (${columnsString}) VALUES ${values}`;
 
+  console.log("sql >>> ", sql);
   return sql;
 }
 

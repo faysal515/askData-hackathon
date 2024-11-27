@@ -26,6 +26,11 @@ export async function POST(req: Request) {
           description: "date columns in the dataset. only the column name",
         })
       ),
+      numericColumns: z.array(
+        z.string({
+          description: "numeric columns in the dataset. only the column name",
+        })
+      ),
       sql: z.string(),
     }),
     prompt: `
@@ -38,11 +43,12 @@ export async function POST(req: Request) {
     
     Few things to remember:
     1. The table name should be in lowercase.
-    2. The columns should be in lowercase.
+    2. The columns should be in lowercase with no spaces. replace spaces with underscores.
     3. look for data type from the preview and use the appropriate data type.
     4. prefer using text type for the columns string values or columns that you're not sure about the data type.
-    5. for longitude and latitude, use text type.
-    6. some columns might have date as string. in that case, use date type.
+    5. use numeric type for the columns that have numbers.
+    6. for longitude and latitude, use text type.
+    7. some columns might have date as string. in that case, use date type.
     
     `,
   });

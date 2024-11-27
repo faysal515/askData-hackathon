@@ -209,7 +209,6 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
       { role: "user", content: newMessage.text },
     ]);
     setInput("");
-    setIsTyping(true);
 
     // Scroll to bottom after sending message
     setTimeout(scrollToBottom, 100);
@@ -233,6 +232,7 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
 
   const sendMessageToApi = async (payloadMessage: any) => {
     try {
+      setIsTyping(true);
       console.log("Sending message:", input.trim());
       console.log(" >>> ", { payloadMessage, apiMessages });
 
@@ -264,6 +264,7 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
         if (parsed.function_call_required) {
           if (parsed.sql_args) {
             // Handle SQL query case
+            setTypingText("Calculating..."); // Set specific text for SQL operations
             const result = await dbManager?.execute(parsed.sql_args.sql);
             console.log("sql result >>> ", result);
 
@@ -297,6 +298,7 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
               await sendMessageToApi([...payloadMessage, ...newApiMessages]);
             }
           } else if (parsed.chart_args) {
+            setTypingText("Generating chart..."); // Set specific text for chart generation
             // Handle chart generation case
             setMessages((prev) => [
               ...prev,
@@ -371,12 +373,6 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
     });
   };
 
-  const formatMessageDate = (date: Date) => {
-    if (isToday(date)) return "Today";
-    if (isYesterday(date)) return "Yesterday";
-    return format(date, "EEE dd MMM");
-  };
-
   const handleUrlSubmit = (newDatasets: Dataset[]) => {
     console.log("Datasets submitted:", newDatasets);
     setDatasets(newDatasets);
@@ -422,25 +418,21 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
         }),
       });
 
-      const { sql, columns, tableName, dateColumns } =
+      const { sql, columns, tableName, dateColumns, numericColumns } =
         await tableResponse.json();
       const result = await dbManager?.execute(sql);
       console.log("table create result >>> ", result);
 
       const insertResult = await dbManager?.execute(
-        insertToTable(tableName, csvData.data, columns, dateColumns)
+        insertToTable(
+          tableName,
+          csvData.data,
+          columns,
+          dateColumns,
+          numericColumns
+        )
       );
       console.log("insert to table result >>> ", insertResult);
-      // setMessages((prev) => [
-      //   ...prev,
-      //   {
-      //     id: prev.length + 1,
-      //     text: `Loading data from: ${dataset.title}`,
-      //     role: "assistant",
-      //     timestamp: new Date(),
-      //     isStatusMessage: true,
-      //   },
-      // ]);
       setTypingText("");
       setMessages((prev) => [
         ...prev,

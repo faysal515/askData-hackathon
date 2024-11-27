@@ -12,6 +12,7 @@ import {
 } from "chart.js";
 import { Chart, ChartProps } from "react-chartjs-2";
 import { ErrorBoundary } from "react-error-boundary";
+import { memo } from "react";
 
 // Register ChartJS components
 ChartJS.register(
@@ -32,8 +33,9 @@ export type GeneratedChartProps = {
   };
 };
 
-export default function GeneratedChart({ config }: GeneratedChartProps) {
-  console.log("config >>> ", config);
+const GeneratedChart = memo(function GeneratedChart({
+  config,
+}: GeneratedChartProps) {
   const { type, data, options } = config;
 
   return (
@@ -47,12 +49,8 @@ export default function GeneratedChart({ config }: GeneratedChartProps) {
       <m.div
         className="relative w-full max-w-2xl h-[50vw] max-h-96 my-8"
         variants={{
-          hidden: {
-            opacity: 0,
-          },
-          show: {
-            opacity: 1,
-          },
+          hidden: { opacity: 0 },
+          show: { opacity: 1 },
         }}
         initial="hidden"
         animate="show"
@@ -69,4 +67,6 @@ export default function GeneratedChart({ config }: GeneratedChartProps) {
       </m.div>
     </ErrorBoundary>
   );
-}
+});
+
+export default GeneratedChart;
