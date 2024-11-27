@@ -153,6 +153,7 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
   const [selectedTableSchema, setSelectedTableSchema] = useState<
     string[] | null
   >(null);
+  const [analyticsQuestions, setAnalyticsQuestions] = useState<string[]>([]);
 
   useEffect(() => {
     setCharCount(input.length);
@@ -451,6 +452,7 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
         },
       ]);
       setSelectedTableSchema(sql);
+      setAnalyticsQuestions(analyticsQuestions || []);
     } catch (error) {
       console.error("Error loading dataset:", error);
       setMessages((prev) => [
@@ -466,6 +468,13 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
       setTimeout(scrollToBottom, 100);
     } finally {
       setIsTyping(false);
+    }
+  };
+
+  const handleQuestionSelect = (question: string) => {
+    setInput(question);
+    if (textareaRef.current) {
+      textareaRef.current.focus();
     }
   };
 
@@ -601,6 +610,21 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
             </ScrollArea>
 
             <div className="p-4">
+              {analyticsQuestions.length > 0 && (
+                <div className="mb-4 flex gap-2">
+                  {analyticsQuestions.map((question, index) => (
+                    <button
+                      key={index}
+                      onClick={() => handleQuestionSelect(question)}
+                      className="flex-1 px-4 py-2 text-sm text-center bg-white hover:bg-gray-50 border border-gray-200 rounded-full transition-colors"
+                      style={{ whiteSpace: "normal", wordWrap: "break-word" }}
+                    >
+                      {question}
+                    </button>
+                  ))}
+                </div>
+              )}
+
               <div className="bg-background-gray rounded-lg p-4">
                 <div className="flex flex-col space-y-2">
                   <div className="flex space-x-2">
