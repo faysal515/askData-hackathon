@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, ChangeEvent } from "react";
-import { Send, ImagePlus, X, Copy, PlayCircle } from "lucide-react";
+import { Send, ImagePlus, X, Copy, PlayCircle, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -478,6 +478,24 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
     }
   };
 
+  const handleClearChat = async () => {
+    // Clear all states
+    setMessages([]);
+    setApiMessages([]);
+    setDatasets([]);
+    setInput("");
+    setCharCount(0);
+    setIsTyping(false);
+    setTypingText("");
+    setCopiedMessageId(null);
+    setSelectedTable(null);
+    setSelectedTableSchema(null);
+    setAnalyticsQuestions([]);
+
+    // Drop all tables
+    await dbManager?.dropAllTables();
+  };
+
   // Add this useEffect to scroll when messages change
   useEffect(() => {
     scrollToBottom();
@@ -616,8 +634,7 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
                     <button
                       key={index}
                       onClick={() => handleQuestionSelect(question)}
-                      className="flex-1 px-4 py-2 text-sm text-center bg-white hover:bg-gray-50 border border-gray-200 rounded-full transition-colors"
-                      style={{ whiteSpace: "normal", wordWrap: "break-word" }}
+                      className="flex-1 px-4 py-2 text-sm text-center bg-white hover:bg-gray-50 border border-gray-200 rounded-full transition-colors whitespace-nowrap overflow-hidden text-ellipsis"
                     >
                       {question}
                     </button>
@@ -626,35 +643,41 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
               )}
 
               <div className="bg-background-gray rounded-lg p-4">
-                <div className="flex flex-col space-y-2">
-                  <div className="flex space-x-2">
-                    <Textarea
-                      ref={textareaRef}
-                      placeholder="Type your message..."
-                      value={input}
-                      onChange={handleInputChange}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" && !e.shiftKey) {
-                          e.preventDefault();
-                          handleSend();
-                        }
-                      }}
-                      className="flex-grow bg-background min-h-[40px] max-h-[120px] overflow-y-auto resize-none rounded-lg"
-                      style={{ height: "auto" }}
-                      rows={1}
-                      autoFocus
-                    />
-                    <Button
-                      onClick={handleSend}
-                      className="bg-primary hover:bg-primary/90 text-background self-end rounded-lg"
-                      disabled={
-                        !input.trim() || isTyping || messages.length === 0
+                <div className="flex space-x-2">
+                  <Textarea
+                    ref={textareaRef}
+                    placeholder="Type your message..."
+                    value={input}
+                    onChange={handleInputChange}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSend();
                       }
-                    >
-                      <Send className="h-4 w-4" />
-                      <span className="sr-only">Send</span>
-                    </Button>
-                  </div>
+                    }}
+                    className="flex-grow bg-background min-h-[40px] max-h-[120px] overflow-y-auto resize-none rounded-lg"
+                    style={{ height: "auto" }}
+                    rows={1}
+                    autoFocus
+                  />
+                  <Button
+                    onClick={handleSend}
+                    className="bg-primary hover:bg-primary/90 text-background self-end rounded-lg"
+                    disabled={
+                      !input.trim() || isTyping || messages.length === 0
+                    }
+                  >
+                    <Send className="h-4 w-4" />
+                    <span className="sr-only">Send</span>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={handleClearChat}
+                    className="self-end rounded-lg"
+                    title="Clear chat history"
+                  >
+                    <Trash2 className="h-4 w-4 text-gray-500" />
+                  </Button>
                 </div>
               </div>
             </div>
