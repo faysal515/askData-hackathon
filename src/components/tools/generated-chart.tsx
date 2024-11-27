@@ -42,6 +42,40 @@ const GeneratedChart = memo(function GeneratedChart({
 }: GeneratedChartProps) {
   const { type, data, options } = config;
 
+  // Create default scale configuration based on chart type
+  const getScaleConfig = () => {
+    const baseConfig = options?.scales || {};
+
+    if (type === "line" || type === "bar") {
+      return {
+        ...baseConfig,
+        x: {
+          type: "category",
+          display: true,
+          ...baseConfig.x,
+          ticks: {
+            ...baseConfig?.x?.ticks,
+            autoSkip: true,
+            maxRotation: 45,
+            minRotation: 45,
+            maxTicksLimit: 20,
+            autoSkipPadding: 10,
+            align: "center",
+            crossAlign: "far",
+            padding: 8,
+          },
+        },
+        y: {
+          type: "linear",
+          display: true,
+          ...baseConfig.y,
+        },
+      };
+    }
+
+    return baseConfig;
+  };
+
   return (
     <ErrorBoundary
       fallbackRender={() => (
@@ -67,27 +101,7 @@ const GeneratedChart = memo(function GeneratedChart({
             ...options,
             maintainAspectRatio: false,
             responsive: true,
-            scales: {
-              ...options?.scales,
-              x:
-                type === "line" || type === "bar"
-                  ? {
-                      ...options?.scales?.x,
-                      ticks: {
-                        ...options?.scales?.x?.ticks,
-                        // @ts-ignore
-                        autoSkip: false,
-                        maxRotation: 45,
-                        minRotation: 45,
-                        maxTicksLimit: 20,
-                        autoSkipPadding: 10,
-                        align: "center",
-                        crossAlign: "far",
-                        padding: 8,
-                      },
-                    }
-                  : options?.scales?.x,
-            },
+            scales: getScaleConfig(),
           }}
         />
       </m.div>

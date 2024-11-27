@@ -72,15 +72,15 @@ const TypingIndicator = ({ text }: { text?: string }) => (
     <div className="flex space-x-1">
       <div
         className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-        style={{ animationDelay: "'0ms'" }}
+        style={{ animationDelay: "0ms" }}
       ></div>
       <div
         className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-        style={{ animationDelay: "'150ms'" }}
+        style={{ animationDelay: "150ms" }}
       ></div>
       <div
         className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-        style={{ animationDelay: "'300ms'" }}
+        style={{ animationDelay: "300ms" }}
       ></div>
     </div>
     {text && <p className="text-xs text-gray-500 mt-1">{text}</p>}
@@ -264,8 +264,7 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
 
         if (parsed.function_call_required) {
           if (parsed.sql_args) {
-            // Handle SQL query case
-            setTypingText("Calculating..."); // Set specific text for SQL operations
+            setTypingText("Calculating...");
             const result = await dbManager?.execute(parsed.sql_args.sql);
             console.log("sql result >>> ", result);
 
@@ -298,9 +297,9 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
               setApiMessages((prev) => [...prev, ...newApiMessages]);
               await sendMessageToApi([...payloadMessage, ...newApiMessages]);
             }
+            await new Promise((resolve) => setTimeout(resolve, 500));
           } else if (parsed.chart_args) {
-            setTypingText("Generating chart..."); // Set specific text for chart generation
-            // Handle chart generation case
+            setTypingText("Generating chart...");
             setMessages((prev) => [
               ...prev,
               {
@@ -313,8 +312,8 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
               },
             ]);
 
-            // If there's accompanying content with the chart, send it as a separate message
             if (parsed.content) {
+              await new Promise((resolve) => setTimeout(resolve, 500));
               setMessages((prev) => [
                 ...prev,
                 {
@@ -325,8 +324,10 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
                 },
               ]);
             }
+            await new Promise((resolve) => setTimeout(resolve, 500));
           }
         } else if (parsed.content) {
+          await new Promise((resolve) => setTimeout(resolve, 100));
           setMessages((prev) => [
             ...prev,
             {
@@ -340,7 +341,9 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
             ...prev,
             { role: "assistant", content: parsed.content },
           ]);
+          await new Promise((resolve) => setTimeout(resolve, 100));
         }
+        scrollToBottom();
       }
     } catch (error) {
       console.error("Error:", error);
@@ -355,8 +358,11 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
         },
       ]);
     } finally {
-      setIsTyping(false);
-      setTimeout(scrollToBottom, 100);
+      scrollToBottom();
+      setTimeout(() => {
+        setIsTyping(false);
+        setTypingText("");
+      }, 300);
     }
   };
 
