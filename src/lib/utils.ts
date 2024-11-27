@@ -37,24 +37,19 @@ export function insertToTable(
   const parsed = Papa.parse(text, {
     header: true,
     skipEmptyLines: true,
-    transformHeader: (header) => header.toLowerCase().trim(),
   });
 
-  console.log("parsed >>> ", parsed);
-
-  const normalizedColumns = columns.map((col) => col.toLowerCase());
-  const normalizedDateColumns = dateColumns.map((col) => col.toLowerCase());
-  const normalizedNumericColumns = numericColumns.map((col) =>
-    col.toLowerCase()
-  );
+  const normalizeColumnName = (col: string) =>
+    col.toLowerCase().replace(/[\s_]+/g, "_");
+  const normalizedDateColumns = dateColumns.map(normalizeColumnName);
+  const normalizedNumericColumns = numericColumns.map(normalizeColumnName);
 
   const values = parsed.data
     .map((row: any) => {
-      const rowValues = normalizedColumns
-        .map((col) => {
-          const value = row[col] || row[col.replace(/_/g, " ")];
+      const rowValues = Object.values(row)
+        .map((value: any, index) => {
+          const col = normalizeColumnName(columns[index]);
 
-          console.log("value >>> ", { row: row, col: col, value: value });
           if (value === undefined || value === null || value === "") {
             return "NULL";
           }
@@ -64,7 +59,6 @@ export function insertToTable(
           }
 
           if (normalizedNumericColumns.includes(col)) {
-            // Remove commas and try to convert to number
             const cleanValue = value.toString().replace(/,/g, "").trim();
             return isNaN(Number(cleanValue)) ? "NULL" : cleanValue;
           }
