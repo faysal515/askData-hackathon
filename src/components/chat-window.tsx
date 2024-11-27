@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, ChangeEvent } from "react";
-import { Send, ImagePlus, X, Copy, PlayCircle, Trash2 } from "lucide-react";
+import { Send, ImagePlus, X, Copy, PlayCircle, RotateCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -682,7 +682,7 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
                     className="self-end rounded-lg"
                     title="Clear chat history"
                   >
-                    <Trash2 className="h-4 w-4 text-gray-500" />
+                    <RotateCw className="h-4 w-4 text-gray-500" />
                   </Button>
                 </div>
               </div>
