@@ -629,12 +629,12 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
 
             <div className="p-4">
               {analyticsQuestions.length > 0 && (
-                <div className="mb-4 flex gap-2">
+                <div className="mb-4 flex flex-wrap gap-2">
                   {analyticsQuestions.map((question, index) => (
                     <button
                       key={index}
                       onClick={() => handleQuestionSelect(question)}
-                      className="flex-1 px-4 py-2 text-sm text-center bg-white hover:bg-gray-50 border border-gray-200 rounded-full transition-colors whitespace-nowrap overflow-hidden text-ellipsis"
+                      className="flex-1 px-4 py-2 text-sm text-center bg-white hover:bg-gray-50 border border-gray-200 rounded-full transition-colors whitespace-normal overflow-hidden text-ellipsis"
                     >
                       {question}
                     </button>
