@@ -9,6 +9,8 @@ import {
   Legend,
   ChartTypeRegistry,
   ArcElement,
+  PointElement,
+  LineElement,
 } from "chart.js";
 import { Chart, ChartProps } from "react-chartjs-2";
 import { ErrorBoundary } from "react-error-boundary";
@@ -20,6 +22,8 @@ ChartJS.register(
   LinearScale,
   BarElement,
   ArcElement,
+  PointElement,
+  LineElement,
   Title,
   Tooltip,
   Legend
@@ -47,7 +51,7 @@ const GeneratedChart = memo(function GeneratedChart({
       )}
     >
       <m.div
-        className="relative w-full max-w-2xl h-[50vw] max-h-96 my-8"
+        className="relative w-full h-[400px] overflow-x-auto"
         variants={{
           hidden: { opacity: 0 },
           show: { opacity: 1 },
@@ -56,12 +60,34 @@ const GeneratedChart = memo(function GeneratedChart({
         animate="show"
       >
         <Chart
-          className="max-w-full max-h-full"
+          className="w-full h-full"
           type={type}
           data={data}
           options={{
             ...options,
             maintainAspectRatio: false,
+            responsive: true,
+            scales: {
+              ...options?.scales,
+              x:
+                type === "line" || type === "bar"
+                  ? {
+                      ...options?.scales?.x,
+                      ticks: {
+                        ...options?.scales?.x?.ticks,
+                        // @ts-ignore
+                        autoSkip: false,
+                        maxRotation: 45,
+                        minRotation: 45,
+                        maxTicksLimit: 20,
+                        autoSkipPadding: 10,
+                        align: "center",
+                        crossAlign: "far",
+                        padding: 8,
+                      },
+                    }
+                  : options?.scales?.x,
+            },
           }}
         />
       </m.div>

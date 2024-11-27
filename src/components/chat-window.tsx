@@ -418,8 +418,14 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
         }),
       });
 
-      const { sql, columns, tableName, dateColumns, numericColumns } =
-        await tableResponse.json();
+      const {
+        sql,
+        columns,
+        tableName,
+        dateColumns,
+        numericColumns,
+        analyticsQuestions,
+      } = await tableResponse.json();
       const result = await dbManager?.execute(sql);
       console.log("table create result >>> ", result);
 
@@ -470,10 +476,9 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
 
   return (
     <div className="h-full w-full flex flex-col rounded-lg">
-      {/* Header */}
-      <div className="flex items-center p-4 border-b">
+      {/* <div className="flex items-center p-4 border-b">
         <h1 className="font-semibold">Abu Dhabi Data Assistant</h1>
-      </div>
+      </div> */}
 
       <div className="flex-1 overflow-hidden">
         <div

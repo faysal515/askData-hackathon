@@ -32,23 +32,33 @@ export async function POST(req: Request) {
         })
       ),
       sql: z.string(),
+      analyticsQuestions: z.array(z.string()),
     }),
     prompt: `
-    Given the following data preview and file name, generate the sql query to create a table and the columns.
+    Given the following data preview and file name, perform the following tasks:
+
+    1. Generate a SQL Query:
+    - Create a SQL query to define a table based on the data preview provided. Follow these rules:
+    - The table name should be in lowercase.
+    - The columns should be in lowercase with no spaces; replace spaces with underscores.
+    - Determine the data types based on the preview:
+    - Use text for string values or columns with unknown types.
+    - Use numeric for columns with numbers.
+    - Use text for longitude and latitude.
+    - Use date for columns with date strings.
+
+    2. Generate Analytics Questions:
+    - Analyze the data preview and suggest three relevant analytics questions that can be derived from the dataset. Follow these rules:
+    - Ensure the questions are practical, actionable, and based on the columns and data provided.
+    - Think of these questions might be asked by a business user or decision maker who doesn't have a technical background.
+    - if there's column of date type or numeric type, prepare a question that uses those columns.
+    - Prepare two questions which can be answered in text format and one question that can be answered in chart.
+
     ---- preview start ----
     ${preview}
     ---- preview end ----
     
     file name: ${fileName}
-    
-    Few things to remember:
-    1. The table name should be in lowercase.
-    2. The columns should be in lowercase with no spaces. replace spaces with underscores.
-    3. look for data type from the preview and use the appropriate data type.
-    4. prefer using text type for the columns string values or columns that you're not sure about the data type.
-    5. use numeric type for the columns that have numbers.
-    6. for longitude and latitude, use text type.
-    7. some columns might have date as string. in that case, use date type.
     
     `,
   });
