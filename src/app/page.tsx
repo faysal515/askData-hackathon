@@ -2,7 +2,6 @@
 
 import { ChatWindowComponent } from "@/components/chat-window";
 import { DbManager } from "@/lib/db";
-import { tools, convertToCoreTools } from "@/lib/tools";
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import LoaderIcon from "@/asset/askdata-avatar.svg";

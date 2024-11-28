@@ -101,6 +101,7 @@ const GeneratedChart = memo(function GeneratedChart({
             ...options,
             maintainAspectRatio: false,
             responsive: true,
+            // @ts-ignore
             scales: getScaleConfig(),
           }}
         />

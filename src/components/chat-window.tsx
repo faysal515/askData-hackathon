@@ -1,7 +1,15 @@
 "use client";
 
 import React, { useState, useEffect, useRef, ChangeEvent } from "react";
-import { Send, ImagePlus, X, Copy, PlayCircle, RotateCw } from "lucide-react";
+import {
+  Send,
+  ImagePlus,
+  X,
+  Copy,
+  PlayCircle,
+  RotateCw,
+  Loader2,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -69,21 +77,10 @@ const TypingIndicator = ({ text }: { text?: string }) => (
       <AvatarImage src={AskDataAvatar.src} alt="AI Assistant" />
       <AvatarFallback>AI</AvatarFallback>
     </Avatar>
-    <div className="flex space-x-1">
-      <div
-        className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-        style={{ animationDelay: "0ms" }}
-      ></div>
-      <div
-        className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-        style={{ animationDelay: "150ms" }}
-      ></div>
-      <div
-        className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-        style={{ animationDelay: "300ms" }}
-      ></div>
+    <div className="flex items-center gap-2">
+      <p className="text-sm text-gray-500">{text || "Thinking"}</p>
+      <Loader2 className="h-3 w-3 text-gray-500 animate-spin" />
     </div>
-    {text && <p className="text-xs text-gray-500 mt-1">{text}</p>}
   </div>
 );
 
@@ -154,18 +151,12 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
     string[] | null
   >(null);
   const [analyticsQuestions, setAnalyticsQuestions] = useState<string[]>([]);
+  const [showAnalytics, setShowAnalytics] = useState(true);
 
   useEffect(() => {
     setCharCount(input.length);
     adjustTextareaHeight();
   }, [input]);
-
-  useEffect(() => {
-    if (isTyping) {
-      const timer = setTimeout(() => setIsTyping(false), 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [isTyping]);
 
   const adjustTextareaHeight = () => {
     if (textareaRef.current) {
@@ -398,25 +389,24 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
 
   const handleDatasetSelect = async (dataset: Dataset) => {
     setIsTyping(true);
+    console.time("Total handleDatasetSelect");
 
     try {
+      setTypingText("Downloading your data");
+      console.time("Fetch CSV data");
       const response = await fetch("/api/dataset/load", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url: dataset.url }),
       });
+      console.timeEnd("Fetch CSV data");
 
-      if (!response.ok) {
-        throw new Error("Failed to load dataset");
-      }
-
+      if (!response.ok) throw new Error("Failed to load dataset");
       const csvData = await response.json();
 
-      setTypingText("Getting your data ready...");
-      setTimeout(scrollToBottom, 100);
-
+      // Create table
+      setTypingText("Checking if everything is ok");
+      console.time("Create table API call");
       const tableResponse = await fetch("/api/chat/create-table", {
         method: "POST",
         body: JSON.stringify({
@@ -424,29 +414,32 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
           fileName: dataset.title,
         }),
       });
+      const tableData = await tableResponse.json();
+      console.timeEnd("Create table API call");
 
-      const {
-        sql,
-        columns,
-        tableName,
-        dateColumns,
-        numericColumns,
-        analyticsQuestions,
-      } = await tableResponse.json();
-      const result = await dbManager?.execute(sql);
+      // Execute create table SQL
+      // setTypingText("Creating database table...");
+      console.time("Execute create table SQL");
+      const result = await dbManager?.execute(tableData.sql);
       console.log("table create result >>> ", result);
+      console.timeEnd("Execute create table SQL");
 
+      // Insert data
+      setTypingText("We're almost there");
+      console.time("Insert data to table");
       const insertResult = await dbManager?.execute(
         insertToTable(
-          tableName,
+          tableData.tableName,
           csvData.data,
-          columns,
-          dateColumns,
-          numericColumns
+          tableData.columns,
+          tableData.dateColumns,
+          tableData.numericColumns
         )
       );
       console.log("insert to table result >>> ", insertResult);
-      setTypingText("");
+      console.timeEnd("Insert data to table");
+
+      // Update UI states
       setMessages((prev) => [
         ...prev,
         {
@@ -457,8 +450,8 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
           isStatusMessage: true,
         },
       ]);
-      setSelectedTableSchema(sql);
-      setAnalyticsQuestions(analyticsQuestions || []);
+      setSelectedTableSchema(tableData.sql);
+      setAnalyticsQuestions(tableData.analyticsQuestions || []);
     } catch (error) {
       console.error("Error loading dataset:", error);
       setMessages((prev) => [
@@ -473,7 +466,9 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
       ]);
       setTimeout(scrollToBottom, 100);
     } finally {
+      setTypingText("");
       setIsTyping(false);
+      console.timeEnd("Total handleDatasetSelect");
     }
   };
 
@@ -634,17 +629,33 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
             </ScrollArea>
 
             <div className="p-4">
-              {analyticsQuestions.length > 0 && (
-                <div className="mb-4 flex flex-wrap gap-2">
-                  {analyticsQuestions.map((question, index) => (
-                    <button
-                      key={index}
-                      onClick={() => handleQuestionSelect(question)}
-                      className="flex-1 px-4 py-2 text-sm text-center bg-white hover:bg-gray-50 border border-gray-200 rounded-full transition-colors whitespace-normal overflow-hidden text-ellipsis"
+              {analyticsQuestions.length > 0 && showAnalytics && (
+                <div className="mb-4 relative bg-gray-50 p-4 rounded-lg">
+                  <div className="flex justify-between items-center mb-2">
+                    <h3 className="text-sm font-medium text-gray-700">
+                      Suggested questions
+                    </h3>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowAnalytics(false)}
+                      className="h-6 w-6 p-0 hover:bg-gray-200 rounded-full"
                     >
-                      {question}
-                    </button>
-                  ))}
+                      <X className="h-4 w-4" />
+                      <span className="sr-only">Close suggestions</span>
+                    </Button>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {analyticsQuestions.map((question, index) => (
+                      <button
+                        key={index}
+                        onClick={() => handleQuestionSelect(question)}
+                        className="flex-1 px-4 py-2 text-sm text-center bg-white hover:bg-gray-50 border border-gray-200 rounded-full transition-colors whitespace-normal overflow-hidden text-ellipsis"
+                      >
+                        {question}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
 
