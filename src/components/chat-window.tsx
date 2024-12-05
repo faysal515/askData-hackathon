@@ -417,9 +417,8 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
       const tableData = await tableResponse.json();
       console.timeEnd("Create table API call");
 
-      // Execute create table SQL
-      // setTypingText("Creating database table...");
       console.time("Execute create table SQL");
+      // console.log("sql >>> \n", tableData.sql);
       const result = await dbManager?.execute(tableData.sql);
       console.log("table create result >>> ", result);
       console.timeEnd("Execute create table SQL");
@@ -503,16 +502,12 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
   }, [messages]);
 
   return (
-    <div className="h-full w-full flex flex-col rounded-lg">
-      {/* <div className="flex items-center p-4 border-b">
-        <h1 className="font-semibold">Abu Dhabi Data Assistant</h1>
-      </div> */}
-
-      <div className="flex-1 overflow-hidden">
+    <div className="h-full w-full flex flex-col">
+      <div className="flex-1 overflow-hidden p-1.5">
         <div
-          className={`flex justify-center items-center min-h-screen bg-background-gray p-4 ${inter.className}`}
+          className={`flex justify-center items-center h-full bg-background-gray ${inter.className}`}
         >
-          <div className="w-full max-w-4xl h-[calc(100vh-6rem)] bg-background rounded-lg shadow-lg flex flex-col">
+          <div className="w-full max-w-4xl h-full bg-background shadow-lg flex flex-col">
             <ScrollArea className="flex-grow p-4" ref={scrollAreaRef}>
               {messages.length === 0 ? (
                 <EmptyState onUrlSubmit={handleUrlSubmit} />
@@ -630,7 +625,7 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
 
             <div className="p-4">
               {analyticsQuestions.length > 0 && showAnalytics && (
-                <div className="mb-4 relative bg-gray-50 p-4 rounded-lg">
+                <div className="mb-4 relative bg-gray-50 p-4 rounded-lg animate-in fade-in slide-in-from-bottom duration-300">
                   <div className="flex justify-between items-center mb-2">
                     <h3 className="text-sm font-medium text-gray-700">
                       Suggested questions
