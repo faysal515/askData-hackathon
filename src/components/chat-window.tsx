@@ -1,7 +1,15 @@
 "use client";
 
 import React, { useState, useEffect, useRef, ChangeEvent } from "react";
-import { Send, ImagePlus, X, Copy, PlayCircle } from "lucide-react";
+import {
+  Send,
+  ImagePlus,
+  X,
+  Copy,
+  PlayCircle,
+  RotateCw,
+  Loader2,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -69,21 +77,10 @@ const TypingIndicator = ({ text }: { text?: string }) => (
       <AvatarImage src={AskDataAvatar.src} alt="AI Assistant" />
       <AvatarFallback>AI</AvatarFallback>
     </Avatar>
-    <div className="flex space-x-1">
-      <div
-        className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-        style={{ animationDelay: "'0ms'" }}
-      ></div>
-      <div
-        className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-        style={{ animationDelay: "'150ms'" }}
-      ></div>
-      <div
-        className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-        style={{ animationDelay: "'300ms'" }}
-      ></div>
+    <div className="flex items-center gap-2">
+      <p className="text-sm text-gray-500">{text || "Thinking"}</p>
+      <Loader2 className="h-3 w-3 text-gray-500 animate-spin" />
     </div>
-    {text && <p className="text-xs text-gray-500 mt-1">{text}</p>}
   </div>
 );
 
@@ -153,18 +150,13 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
   const [selectedTableSchema, setSelectedTableSchema] = useState<
     string[] | null
   >(null);
+  const [analyticsQuestions, setAnalyticsQuestions] = useState<string[]>([]);
+  const [showAnalytics, setShowAnalytics] = useState(true);
 
   useEffect(() => {
     setCharCount(input.length);
     adjustTextareaHeight();
   }, [input]);
-
-  useEffect(() => {
-    if (isTyping) {
-      const timer = setTimeout(() => setIsTyping(false), 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [isTyping]);
 
   const adjustTextareaHeight = () => {
     if (textareaRef.current) {
@@ -209,7 +201,6 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
       { role: "user", content: newMessage.text },
     ]);
     setInput("");
-    setIsTyping(true);
 
     // Scroll to bottom after sending message
     setTimeout(scrollToBottom, 100);
@@ -233,6 +224,7 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
 
   const sendMessageToApi = async (payloadMessage: any) => {
     try {
+      setIsTyping(true);
       console.log("Sending message:", input.trim());
       console.log(" >>> ", { payloadMessage, apiMessages });
 
@@ -263,7 +255,7 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
 
         if (parsed.function_call_required) {
           if (parsed.sql_args) {
-            // Handle SQL query case
+            setTypingText("Calculating...");
             const result = await dbManager?.execute(parsed.sql_args.sql);
             console.log("sql result >>> ", result);
 
@@ -296,8 +288,9 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
               setApiMessages((prev) => [...prev, ...newApiMessages]);
               await sendMessageToApi([...payloadMessage, ...newApiMessages]);
             }
+            await new Promise((resolve) => setTimeout(resolve, 500));
           } else if (parsed.chart_args) {
-            // Handle chart generation case
+            setTypingText("Generating chart...");
             setMessages((prev) => [
               ...prev,
               {
@@ -310,8 +303,8 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
               },
             ]);
 
-            // If there's accompanying content with the chart, send it as a separate message
             if (parsed.content) {
+              await new Promise((resolve) => setTimeout(resolve, 500));
               setMessages((prev) => [
                 ...prev,
                 {
@@ -322,8 +315,10 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
                 },
               ]);
             }
+            await new Promise((resolve) => setTimeout(resolve, 500));
           }
         } else if (parsed.content) {
+          await new Promise((resolve) => setTimeout(resolve, 100));
           setMessages((prev) => [
             ...prev,
             {
@@ -337,7 +332,9 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
             ...prev,
             { role: "assistant", content: parsed.content },
           ]);
+          await new Promise((resolve) => setTimeout(resolve, 100));
         }
+        scrollToBottom();
       }
     } catch (error) {
       console.error("Error:", error);
@@ -352,8 +349,11 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
         },
       ]);
     } finally {
-      setIsTyping(false);
-      setTimeout(scrollToBottom, 100);
+      scrollToBottom();
+      setTimeout(() => {
+        setIsTyping(false);
+        setTypingText("");
+      }, 300);
     }
   };
 
@@ -369,12 +369,6 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
       setCopiedMessageId(messageId);
       setTimeout(() => setCopiedMessageId(null), 2000);
     });
-  };
-
-  const formatMessageDate = (date: Date) => {
-    if (isToday(date)) return "Today";
-    if (isYesterday(date)) return "Yesterday";
-    return format(date, "EEE dd MMM");
   };
 
   const handleUrlSubmit = (newDatasets: Dataset[]) => {
@@ -395,25 +389,24 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
 
   const handleDatasetSelect = async (dataset: Dataset) => {
     setIsTyping(true);
+    console.time("Total handleDatasetSelect");
 
     try {
+      setTypingText("Downloading your data");
+      console.time("Fetch CSV data");
       const response = await fetch("/api/dataset/load", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url: dataset.url }),
       });
+      console.timeEnd("Fetch CSV data");
 
-      if (!response.ok) {
-        throw new Error("Failed to load dataset");
-      }
-
+      if (!response.ok) throw new Error("Failed to load dataset");
       const csvData = await response.json();
 
-      setTypingText("Getting your data ready...");
-      setTimeout(scrollToBottom, 100);
-
+      // Create table
+      setTypingText("Checking if everything is ok");
+      console.time("Create table API call");
       const tableResponse = await fetch("/api/chat/create-table", {
         method: "POST",
         body: JSON.stringify({
@@ -421,26 +414,31 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
           fileName: dataset.title,
         }),
       });
+      const tableData = await tableResponse.json();
+      console.timeEnd("Create table API call");
 
-      const { sql, columns, tableName } = await tableResponse.json();
-      const result = await dbManager?.execute(sql);
+      console.time("Execute create table SQL");
+      // console.log("sql >>> \n", tableData.sql);
+      const result = await dbManager?.execute(tableData.sql);
       console.log("table create result >>> ", result);
+      console.timeEnd("Execute create table SQL");
 
+      // Insert data
+      setTypingText("We're almost there");
+      console.time("Insert data to table");
       const insertResult = await dbManager?.execute(
-        insertToTable(tableName, csvData.data, columns)
+        insertToTable(
+          tableData.tableName,
+          csvData.data,
+          tableData.columns,
+          tableData.dateColumns,
+          tableData.numericColumns
+        )
       );
       console.log("insert to table result >>> ", insertResult);
-      // setMessages((prev) => [
-      //   ...prev,
-      //   {
-      //     id: prev.length + 1,
-      //     text: `Loading data from: ${dataset.title}`,
-      //     role: "assistant",
-      //     timestamp: new Date(),
-      //     isStatusMessage: true,
-      //   },
-      // ]);
-      setTypingText("");
+      console.timeEnd("Insert data to table");
+
+      // Update UI states
       setMessages((prev) => [
         ...prev,
         {
@@ -451,7 +449,8 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
           isStatusMessage: true,
         },
       ]);
-      setSelectedTableSchema(sql);
+      setSelectedTableSchema(tableData.sql);
+      setAnalyticsQuestions(tableData.analyticsQuestions || []);
     } catch (error) {
       console.error("Error loading dataset:", error);
       setMessages((prev) => [
@@ -466,8 +465,35 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
       ]);
       setTimeout(scrollToBottom, 100);
     } finally {
+      setTypingText("");
       setIsTyping(false);
+      console.timeEnd("Total handleDatasetSelect");
     }
+  };
+
+  const handleQuestionSelect = (question: string) => {
+    setInput(question);
+    if (textareaRef.current) {
+      textareaRef.current.focus();
+    }
+  };
+
+  const handleClearChat = async () => {
+    // Clear all states
+    setMessages([]);
+    setApiMessages([]);
+    setDatasets([]);
+    setInput("");
+    setCharCount(0);
+    setIsTyping(false);
+    setTypingText("");
+    setCopiedMessageId(null);
+    setSelectedTable(null);
+    setSelectedTableSchema(null);
+    setAnalyticsQuestions([]);
+
+    // Drop all tables
+    await dbManager?.dropAllTables();
   };
 
   // Add this useEffect to scroll when messages change
@@ -476,17 +502,12 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
   }, [messages]);
 
   return (
-    <div className="h-full w-full flex flex-col rounded-lg">
-      {/* Header */}
-      <div className="flex items-center p-4 border-b">
-        <h1 className="font-semibold">Abu Dhabi Data Assistant</h1>
-      </div>
-
-      <div className="flex-1 overflow-hidden">
+    <div className="h-full w-full flex flex-col">
+      <div className="flex-1 overflow-hidden p-1.5">
         <div
-          className={`flex justify-center items-center min-h-screen bg-background-gray p-4 ${inter.className}`}
+          className={`flex justify-center items-center h-full bg-background-gray ${inter.className}`}
         >
-          <div className="w-full max-w-4xl h-[calc(100vh-6rem)] bg-background rounded-lg shadow-lg flex flex-col">
+          <div className="w-full max-w-4xl h-full bg-background shadow-lg flex flex-col">
             <ScrollArea className="flex-grow p-4" ref={scrollAreaRef}>
               {messages.length === 0 ? (
                 <EmptyState onUrlSubmit={handleUrlSubmit} />
@@ -603,36 +624,72 @@ export function ChatWindowComponent({ dbManager }: ChatWindowProps) {
             </ScrollArea>
 
             <div className="p-4">
-              <div className="bg-background-gray rounded-lg p-4">
-                <div className="flex flex-col space-y-2">
-                  <div className="flex space-x-2">
-                    <Textarea
-                      ref={textareaRef}
-                      placeholder="Type your message..."
-                      value={input}
-                      onChange={handleInputChange}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" && !e.shiftKey) {
-                          e.preventDefault();
-                          handleSend();
-                        }
-                      }}
-                      className="flex-grow bg-background min-h-[40px] max-h-[120px] overflow-y-auto resize-none rounded-lg"
-                      style={{ height: "auto" }}
-                      rows={1}
-                      autoFocus
-                    />
+              {analyticsQuestions.length > 0 && showAnalytics && (
+                <div className="mb-4 relative bg-gray-50 p-4 rounded-lg animate-in fade-in slide-in-from-bottom duration-300">
+                  <div className="flex justify-between items-center mb-2">
+                    <h3 className="text-sm font-medium text-gray-700">
+                      Suggested questions
+                    </h3>
                     <Button
-                      onClick={handleSend}
-                      className="bg-primary hover:bg-primary/90 text-background self-end rounded-lg"
-                      disabled={
-                        !input.trim() || isTyping || messages.length === 0
-                      }
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowAnalytics(false)}
+                      className="h-6 w-6 p-0 hover:bg-gray-200 rounded-full"
                     >
-                      <Send className="h-4 w-4" />
-                      <span className="sr-only">Send</span>
+                      <X className="h-4 w-4" />
+                      <span className="sr-only">Close suggestions</span>
                     </Button>
                   </div>
+                  <div className="flex flex-wrap gap-2">
+                    {analyticsQuestions.map((question, index) => (
+                      <button
+                        key={index}
+                        onClick={() => handleQuestionSelect(question)}
+                        className="flex-1 px-4 py-2 text-sm text-center bg-white hover:bg-gray-50 border border-gray-200 rounded-full transition-colors whitespace-normal overflow-hidden text-ellipsis"
+                      >
+                        {question}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="bg-background-gray rounded-lg p-4">
+                <div className="flex space-x-2">
+                  <Textarea
+                    ref={textareaRef}
+                    placeholder="Type your message..."
+                    value={input}
+                    onChange={handleInputChange}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSend();
+                      }
+                    }}
+                    className="flex-grow bg-background min-h-[40px] max-h-[120px] overflow-y-auto resize-none rounded-lg"
+                    style={{ height: "auto" }}
+                    rows={1}
+                    autoFocus
+                  />
+                  <Button
+                    onClick={handleSend}
+                    className="bg-primary hover:bg-primary/90 text-background self-end rounded-lg"
+                    disabled={
+                      !input.trim() || isTyping || messages.length === 0
+                    }
+                  >
+                    <Send className="h-4 w-4" />
+                    <span className="sr-only">Send</span>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={handleClearChat}
+                    className="self-end rounded-lg"
+                    title="Clear chat history"
+                  >
+                    <RotateCw className="h-4 w-4 text-gray-500" />
+                  </Button>
                 </div>
               </div>
             </div>

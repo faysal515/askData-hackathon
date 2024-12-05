@@ -9,9 +9,12 @@ import {
   Legend,
   ChartTypeRegistry,
   ArcElement,
+  PointElement,
+  LineElement,
 } from "chart.js";
 import { Chart, ChartProps } from "react-chartjs-2";
 import { ErrorBoundary } from "react-error-boundary";
+import { memo } from "react";
 
 // Register ChartJS components
 ChartJS.register(
@@ -19,6 +22,8 @@ ChartJS.register(
   LinearScale,
   BarElement,
   ArcElement,
+  PointElement,
+  LineElement,
   Title,
   Tooltip,
   Legend
@@ -32,9 +37,44 @@ export type GeneratedChartProps = {
   };
 };
 
-export default function GeneratedChart({ config }: GeneratedChartProps) {
-  console.log("config >>> ", config);
+const GeneratedChart = memo(function GeneratedChart({
+  config,
+}: GeneratedChartProps) {
   const { type, data, options } = config;
+
+  // Create default scale configuration based on chart type
+  const getScaleConfig = () => {
+    const baseConfig = options?.scales || {};
+
+    if (type === "line" || type === "bar") {
+      return {
+        ...baseConfig,
+        x: {
+          type: "category",
+          display: true,
+          ...baseConfig.x,
+          ticks: {
+            ...baseConfig?.x?.ticks,
+            autoSkip: true,
+            maxRotation: 45,
+            minRotation: 45,
+            maxTicksLimit: 20,
+            autoSkipPadding: 10,
+            align: "center",
+            crossAlign: "far",
+            padding: 8,
+          },
+        },
+        y: {
+          type: "linear",
+          display: true,
+          ...baseConfig.y,
+        },
+      };
+    }
+
+    return baseConfig;
+  };
 
   return (
     <ErrorBoundary
@@ -45,28 +85,29 @@ export default function GeneratedChart({ config }: GeneratedChartProps) {
       )}
     >
       <m.div
-        className="relative w-full max-w-2xl h-[50vw] max-h-96 my-8"
+        className="relative w-full h-[400px] overflow-x-auto"
         variants={{
-          hidden: {
-            opacity: 0,
-          },
-          show: {
-            opacity: 1,
-          },
+          hidden: { opacity: 0 },
+          show: { opacity: 1 },
         }}
         initial="hidden"
         animate="show"
       >
         <Chart
-          className="max-w-full max-h-full"
+          className="w-full h-full"
           type={type}
           data={data}
           options={{
             ...options,
             maintainAspectRatio: false,
+            responsive: true,
+            // @ts-ignore
+            scales: getScaleConfig(),
           }}
         />
       </m.div>
     </ErrorBoundary>
   );
-}
+});
+
+export default GeneratedChart;

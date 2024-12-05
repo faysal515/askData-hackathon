@@ -2,8 +2,9 @@
 
 import { ChatWindowComponent } from "@/components/chat-window";
 import { DbManager } from "@/lib/db";
-import { tools, convertToCoreTools } from "@/lib/tools";
 import { useEffect, useState } from "react";
+import Image from "next/image";
+import LoaderIcon from "@/asset/askdata-avatar.svg";
 
 // Create singleton instance
 const dbManager = typeof window !== "undefined" ? new DbManager() : undefined;
@@ -53,7 +54,20 @@ export default function Home() {
   }
 
   if (!isDbReady) {
-    return <div>Loading database...</div>;
+    return (
+      <div className="h-screen flex items-center justify-center">
+        <div className="text-center">
+          <Image
+            src={LoaderIcon}
+            alt="Loading"
+            width={50}
+            height={50}
+            className="animate-bounce mx-auto"
+          />
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
